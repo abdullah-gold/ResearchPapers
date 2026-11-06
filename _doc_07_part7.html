@@ -1,0 +1,230 @@
+<div class="pb"></div>
+<h1 id="p7"><span class="hnum">VII</span>Documentation &amp; Reporting Standards</h1>
+
+<p>The current proposal's documentation is the weakest part of it: prose lists of tools and activities, no artefacts, no standards, and no traceability from a claim to a result. This Part defines the documentation system that will replace it. The governing principle: <strong>a claim in the thesis must be traceable to a run; a run must be traceable to a commit, a config, a seed and a data fingerprint.</strong></p>
+
+<h2 id="p7-1">7.1 Documentation taxonomy</h2>
+
+<table class="tight">
+<tr><th style="width:18%">Document</th><th style="width:10%">Location</th><th style="width:22%">Owner</th><th style="width:22%">Lifecycle</th><th>Purpose</th></tr>
+<tr><td><strong>README</strong></td><td><code>/README.md</code></td><td>Hasnayen</td><td>Continuous</td><td>Quickstart, architecture summary, status. A reader must reach a running dashboard in &lt; 10 minutes from it.</td></tr>
+<tr><td><strong>Data cards</strong></td><td><code>docs/data-cards/</code></td><td>Md. Abdullah</td><td>Per dataset, updated on change</td><td>Source, licence, schema, coverage, known limitations, known biases.</td></tr>
+<tr><td><strong>Model cards</strong></td><td><code>docs/model-cards/</code></td><td>Tahmid</td><td>Per model version</td><td>Architecture, training window, feature list, metrics, intended use, out-of-scope uses, limitations, ethics.</td></tr>
+<tr><td><strong>ADRs</strong></td><td><code>docs/adr/</code></td><td>Any member</td><td>Append-only</td><td>Architecture decisions and their rationale. Every non-obvious choice gets one.</td></tr>
+<tr><td><strong>Experiment log</strong></td><td><code>experiments/registry.sqlite</code> + <code>docs/experiment-log.md</code></td><td>Tahmid</td><td>Automatic + narrative</td><td>Every run, its config, its result. The registry is the record; the markdown is the story.</td></tr>
+<tr><td><strong>API reference</strong></td><td><code>docs/api/</code></td><td>Hasnayen</td><td>Auto-generated + manual notes</td><td>OpenAPI schema plus worked examples.</td></tr>
+<tr><td><strong>User guide</strong></td><td><code>docs/user-guide.md</code></td><td>Tahmid</td><td>Continuous</td><td>How to use the dashboard: each page, what each chart means, how to read the results.</td></tr>
+<tr><td><strong>Developer guide</strong></td><td><code>docs/developer-guide.md</code></td><td>Hasnayen</td><td>Continuous</td><td>Architecture, module contracts, how to add an asset, how to add a model, the CI gate.</td></tr>
+<tr><td><strong>Methodology note</strong></td><td><code>docs/methodology/</code></td><td>Md. Abdullah</td><td>Continuous</td><td>The detailed method for each module, including every formula and every parameter.</td></tr>
+<tr><td><strong>Reproducibility statement</strong></td><td><code>docs/reproducibility.md</code></td><td>Hasnayen</td><td>Final</td><td>Exactly how to reproduce every number in the thesis.</td></tr>
+<tr><td><strong>Ethics &amp; limitations</strong></td><td><code>docs/ethics.md</code></td><td>All</td><td>Continuous</td><td>The commitments, and a frank account of what the study cannot support.</td></tr>
+</table>
+<p class="caption">Table 7.1 — Documentation inventory with named owners. An unowned document does not get written.</p>
+
+<h2 id="p7-2">7.2 Repository policy and Git discipline</h2>
+
+<h3>Branching</h3>
+<pre>
+main        ← protected: CI must pass; no direct pushes
+  ├─ feat/&lt;issue&gt;-&lt;short&gt;      feature
+  ├─ fix/&lt;issue&gt;-&lt;short&gt;       bug fix
+  └─ exp/&lt;experiment-id&gt;       experiment branch, merged only if it beats baseline
+</pre>
+<ul>
+  <li><strong>Protected main.</strong> Requires CI green + one approving review from a different team member.</li>
+  <li><strong>Short-lived branches.</strong> Maximum 3 days. Long branches are where merge conflicts become week-long emergencies.</li>
+  <li><strong>Commit message format:</strong> <code>&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;</code> with types <code>feat</code>, <code>fix</code>, <code>data</code>, <code>exp</code>, <code>docs</code>, <code>refactor</code>, <code>test</code>. The <code>exp</code> type is specific to this project: an experiment commit references the run ID it produced.</li>
+  <li><strong>Example:</strong> <code>exp(model): XGBoost F4 on T3 assets reaches DA 0.541 (exp_20260514_0031)</code></li>
+</ul>
+
+<h3>What goes in Git and what does not</h3>
+<table class="tight">
+<tr><th style="width:26%">Path</th><th style="width:12%">In Git?</th><th>Reason</th></tr>
+<tr><td><code>src/</code>, <code>config/</code>, <code>tests/</code>, <code>docs/</code>, <code>scripts/</code></td><td><span class="tag t-grn">Yes</span></td><td>Source of truth</td></tr>
+<tr><td><code>requirements.lock</code></td><td><span class="tag t-grn">Yes</span></td><td>Reproducibility</td></tr>
+<tr><td><code>data/raw/</code>, <code>data/interim/</code></td><td><span class="tag t-gra">No</span></td><td>Too large. Version via DVC or a manifest of content hashes — the fingerprint in the run manifest serves the same purpose if DVC is not adopted.</td></tr>
+<tr><td><code>data/curated/</code></td><td><span class="tag t-gra">No</span></td><td>Regenerable from raw + code. Its hash is recorded in the run manifest.</td></tr>
+<tr><td><code>models/</code> (artefacts)</td><td><span class="tag t-amb">Selective</span></td><td>Commit the final, reportable model artefacts and their manifests; exclude intermediate checkpoints. Artefacts are large — use Git LFS or a release artefact store.</td></tr>
+<tr><td><code>experiments/registry.sqlite</code></td><td><span class="tag t-grn">Yes</span></td><td>It is the evidence base. Commit it — it will be small, and it is what makes the thesis's numbers verifiable.</td></tr>
+<tr><td><code>notebooks/</code></td><td><span class="tag t-grn">Yes</span></td><td>Exploration and illustration only. <strong>Notebook outputs that produce reported results are forbidden</strong> — the report builder reads the registry, never a notebook.</td></tr>
+<tr><td><code>.env</code></td><td><span class="tag t-red">Never</span></td><td>Git-ignored from the first commit. The pre-commit hook scans for secrets.</td></tr>
+</table>
+
+<h3>Pre-commit and CI gates</h3>
+<table class="tight">
+<tr><th style="width:26%">Gate</th><th style="width:22%">Tool</th><th>Rule</th></tr>
+<tr><td>Formatting</td><td>ruff format / black</td><td>Line length 100; no diff on commit</td></tr>
+<tr><td>Linting</td><td>ruff</td><td>No unused imports, no bare <code>except</code>, no mutable default arguments</td></tr>
+<tr><td>Type checking</td><td>mypy</td><td>Core modules (<code>features/</code>, <code>evaluation/</code>) typed; no new <code>Any</code></td></tr>
+<tr><td>Tests</td><td>pytest</td><td>All unit + integration + <strong>causality</strong> tests pass</td></tr>
+<tr><td>Secret scan</td><td>pre-commit / detect-secrets</td><td>No credential-shaped strings</td></tr>
+<tr><td>Large-file guard</td><td>pre-commit</td><td>No file &gt; 10 MB without an explicit override</td></tr>
+<tr><td>Notebook hygiene</td><td>nbstripout / custom</td><td>Strip outputs before commit so the repo stays readable</td></tr>
+</table>
+
+<h2 id="p7-3">7.3 Data cards, model cards, ADRs</h2>
+
+<h3>Data card template</h3>
+<pre>
+# Data card: &lt;dataset name&gt;
+
+**Source**          &lt;URL/API endpoint, licence, terms-of-service reference&gt;
+**Access method**   &lt;free / keyless / key-required&gt;
+**Coverage**        &lt;start_date – end_date, refresh cadence, expected gaps&gt;
+**Schema**          &lt;column, type, unit, nullability&gt;  → link to Appendix C
+**Collection method&lt;how each record is obtained and transformed&gt;
+**Known limitations&lt;what this data does not capture, known biases&gt;
+**Licence &amp; ethics  &lt;redistribution terms, personal-data considerations, compliance notes&gt;
+**Downstream use**  &lt;which feature sets and models consume it&gt;
+**Fingerprint**     &lt;sha256 of the curated parquet; regeneration command&gt;
+**Owner / date**    &lt;name&gt;, &lt;YYYY-MM-DD&gt;
+</pre>
+
+<h3>Model card template</h3>
+<pre>
+# Model card: &lt;model_id&gt; v&lt;n&gt;
+
+**Architecture**        &lt;family, layers, hyperparameter search space, selected params&gt;
+**Task**                &lt;regression on y_ret / classification on y_dir&gt;
+**Training window**     &lt;start – end, folds, embargo, regime composition&gt;
+**Feature set**         &lt;F1–F5, exact feature list with version hash&gt;
+**Training data**       &lt;assets, dates, sample count per tier&gt;
+**Performance**         &lt;metrics per tier and per regime, vs baselines&gt;
+**Validation**          &lt;scheme V1–V5, fold count, seeds, mean ± sd&gt;
+**Statistical tests**   &lt;DM vs baseline, adjusted p-values&gt;
+**Intended use**        &lt;academic research and educational demonstration&gt;
+**Out-of-scope uses**   &lt;live trading, investment advice, regulatory decisions&gt;
+**Limitations**         &lt;known failure modes, regime sensitivity, data limitations, staleness&gt;
+**Ethics**              &lt;no live trading, no order routing, not financial advice&gt;
+**Reproduction**        &lt;exact command + expected runtime + seed list&gt;
+**Owner / date**        &lt;name&gt;, &lt;YYYY-MM-DD&gt;
+</pre>
+
+<div class="box">
+<h4>The "out-of-scope uses" section is not optional</h4>
+<p>The model cards must state plainly that the models are research artefacts and are not intended for live trading or investment decisions. This is not just good practice — it is the concrete, enforceable form of the ethics chapter. The proposal promises in §10.1 that the work is "not intended as direct financial or investment advice"; the model card is where that promise becomes an artefact attached to each trained model, which is far stronger than a sentence in a thesis chapter.</p>
+</div>
+
+<h3>ADR template</h3>
+<pre>
+# ADR-&lt;n&gt;: &lt;title&gt;
+
+**Status**   Proposed | Accepted | Superseded by ADR-&lt;n&gt;
+**Date**     YYYY-MM-DD
+**Deciders** &lt;names&gt;
+
+## Context
+What forced a decision? What constraints applied?
+
+## Decision
+What was decided, stated in the active voice.
+
+## Alternatives considered
+Each alternative and why it was rejected — this is the part with lasting value.
+
+## Consequences
+What becomes easier. What becomes harder. What is now impossible.
+</pre>
+
+<h3>ADRs the project will certainly need</h3>
+<ol>
+  <li>Target definition: log returns rather than price levels.</li>
+  <li>Primary model: tree ensemble rather than LSTM, and why.</li>
+  <li>Sentiment source: news only, and the exclusion of social media.</li>
+  <li>Sentiment measure: crypto-density weighting, and the lexicon construction approach.</li>
+  <li>Primary validation scheme: walk-forward with embargo, over the fixed split.</li>
+  <li>Tier assignment rule, and the freeze of market-cap snapshots.</li>
+  <li>Handling of T3 assets with short history: variable-length sequences versus per-tier lookbacks.</li>
+  <li>Metric definitions, including the exact CER formula and the risk-free rate.</li>
+  <li>Multiplicity control: Benjamini–Hochberg at q = 0.05.</li>
+  <li>Scope decisions: what was descoped and why.</li>
+</ol>
+
+<h2 id="p7-4">7.4 Experiment log and artefact naming</h2>
+
+<h3>Run ID format</h3>
+<pre>
+exp_&lt;YYYYMMDD&gt;_&lt;seq&gt;
+Example: exp_20260514_0031
+</pre>
+
+<h3>Artefact naming</h3>
+<pre>
+models/registry/&lt;model_id&gt;/&lt;version&gt;/
+    artifact.joblib        the trained model
+    manifest.json          config, seeds, data fingerprint, metrics
+    card.md                the model card
+    feature_list.json      exact features with the order used at inference
+
+reports/
+    tables/T&lt;no&gt;_&lt;slug&gt;.csv          machine-readable
+    tables/T&lt;no&gt;_&lt;slug&gt;.tex          LaTeX for the thesis
+    figures/F&lt;no&gt;_&lt;slug&gt;.png         300 dpi
+    figures/F&lt;no&gt;_&lt;slug&gt;.svg         vector for the thesis
+</pre>
+<p>The dual CSV + LaTeX output is what makes §6.7's rule possible: the thesis's tables are compiled from the LaTeX, which is generated from the CSV, which is generated from the registry. A number cannot be mistyped in the thesis because nobody types it.</p>
+
+<h3>Experiment log narrative</h3>
+<p>Alongside the automatic registry, maintain a human-readable <code>docs/experiment-log.md</code> with a short entry per substantive run:</p>
+<pre>
+### exp_20260514_0031 — XGBoost, F4, walk-forward
+**Question:** Does lagged cross-asset sentiment add value for T3 assets?
+**Setup:**    XGBoost, F4, V2 (38 folds), seeds 42–46, cost 10bps
+**Result:**   DA 0.541 ± 0.012 (vs F3 0.528 ± 0.011); DM p = 0.031 (BH adj 0.048)
+**Read:**     Supported for T3. No effect for T1 (DM p = 0.62).
+**Action:**   Retained in the final model. F4b control added to isolate the lag structure.
+**Link:**     models/registry/M2_xgboost/v3/  ·  reports/tables/T6_increments.csv
+</pre>
+<p>Entries are short by design. The point is that a reader can reconstruct the project's intellectual history — what was tried, what happened, and why — which is what distinguishes a research project from a code repository.</p>
+
+<h2 id="p7-5">7.5 Code standards</h2>
+
+<ul>
+  <li><strong>PEP 8</strong> with a 100-character line limit, enforced by <code>ruff</code>. No exceptions without a documented reason in <code>pyproject.toml</code>.</li>
+  <li><strong>Google-style docstrings</strong> on every public function: summary, arguments, returns, raises, and — for anything non-obvious — a note on the assumption it relies on.</li>
+  <li><strong>Type hints on public APIs.</strong> <code>mypy</code> clean for <code>features/</code>, <code>evaluation/</code>, <code>modelling/</code>.</li>
+  <li><strong>No bare <code>except</code>.</strong> Catch specific exceptions. The ingestion layer catches specific HTTP errors; the model layer lets training errors propagate.</li>
+  <li><strong>No magic numbers.</strong> Every window length, threshold, lag and rate limit lives in <code>config/*.yaml</code> with a comment. This is what makes the sensitivity analysis possible.</li>
+  <li><strong>Deterministic by default.</strong> Every module that consumes randomness takes a <code>seed</code> argument. No global <code>np.random.seed</code> inside a library function.</li>
+  <li><strong>Fail loudly in the research path, softly in the serving path.</strong> A training run must crash on bad data. A dashboard request must degrade gracefully. Mixing these two behaviours is a common source of silently wrong results.</li>
+  <li><strong>Comments explain why, not what.</strong> <code># shift by one day so the feature uses only past information</code> is useful. <code># increment i</code> is not.</li>
+</ul>
+
+<h2 id="p7-6">7.6 Figure and table standards</h2>
+
+<h3>Figure rules</h3>
+<ul>
+  <li><strong>Numbering:</strong> "Figure 3.1 —" by chapter, caption <em>below</em> the figure, descriptive and self-contained (a reader should understand it without the surrounding paragraph).</li>
+  <li><strong>Resolution:</strong> 300 dpi for raster, SVG for anything that will be scaled or edited. <strong>Never</strong> paste a matplotlib default 100 dpi screenshot into a thesis.</li>
+  <li><strong>Legibility:</strong> axis labels at ≥ 9 pt at final printed size; a legend outside the data area; no chart junk; no 3-D anything.</li>
+  <li><strong>Colour:</strong> a colourblind-safe palette, used consistently across every figure in the thesis. Semantic mapping: sentiment = one hue, price = another, model A/B/C = a fixed set of three. <strong>Fix the palette once and never change it.</strong> Also encode the key distinction with line style or marker shape, so the figures survive greyscale printing.</li>
+  <li><strong>Source attribution:</strong> any figure reproducing or adapting a published figure says so. Adapted figures require permission where the licence requires it. Both Dashtaki et al. (2025) and Kreuzer et al. (2026) are open access under CC-BY, which permits adaptation with attribution — verify the specific licence and the specific figure, and record the permission in the acknowledgements if the journal requires it.</li>
+</ul>
+
+<h3>Table rules</h3>
+<ul>
+  <li><strong>Numbering:</strong> "Table 5.2 —", caption <em>above</em> the table.</li>
+  <li><strong>Every table states its sample</strong>: n, the assets, the period, and the validation scheme, in the caption. A table without a sample description is unusable.</li>
+  <li><strong>Bold the best result per column</strong>, and <em>italicise</em> the second best. State the convention once in the first table's caption.</li>
+  <li><strong>Report mean ± sd</strong> across seeds for anything stochastic. Single numbers are for deterministic quantities only.</li>
+  <li><strong>Significance markers:</strong> *, **, *** for p < 0.05, 0.01, 0.001; state the correction applied in the caption.</li>
+  <li><strong>No more than 7 columns</strong> in a table meant to be read in a document. Wider tables belong in an appendix.</li>
+  <li><strong>All tables are generated.</strong> Never type a number into a thesis table by hand.</li>
+</ul>
+
+<h2 id="p7-7">7.7 Report writing standards</h2>
+
+<table class="tight">
+<tr><th style="width:24%">Rule</th><th>Specification</th></tr>
+<tr><td><strong>Every number is traceable</strong></td><td>Each figure and table cites its generating run ID in the caption or a footnote. The reproducibility appendix maps every headline number to its run.</td></tr>
+<tr><td><strong>Results before interpretation</strong></td><td>State what happened, then what it means. Never interpret before the data is on the page. An examiner should be able to read the results section and disagree with your interpretation without you having pre-empted them.</td></tr>
+<tr><td><strong>Report the negative results</strong></td><td>Which models failed, which feature sets added nothing, which hypotheses failed. A thesis with only positive results is less credible, not more.</td></tr>
+<tr><td><strong>No causal language without a causal design</strong></td><td>Use "is associated with", "predicts", "leads" — never "causes" — unless the design supports causation. The Granger test is predictive precedence, not causation.</td></tr>
+<tr><td><strong>Define on first use</strong></td><td>Every metric, acronym and technical term is defined at first use. Rebuild the acronym table from scratch (Appendix F) and place it correctly.</td></tr>
+<tr><td><strong>Compare against prior work explicitly</strong></td><td>Where a number is comparable to a published figure (accuracy vs Dashtaki et al., Sharpe vs Wang, sentiment coefficients vs Kreuzer et al.), say so and state the differences in setup. Where it is not comparable, say that too.</td></tr>
+<tr><td><strong>Limitations are specific</strong></td><td>Not "the sample is small" but "T3 assets contribute 640 usable observations against 2,900 for T1, so the tier comparison for T3 is underpowered at the 5% level". Specific limitations are credible; generic ones are filler.</td></tr>
+<tr><td><strong>One voice, past tense for work, present for findings</strong></td><td>"The pipeline collects…" for the system; "Sentiment is associated with…" for the findings. Consistent tense throughout.</td></tr>
+<tr><td><strong>Passive constructions avoided</strong></td><td>Prefer active. "The model was trained on…" → "We trained the model on…".</td></tr>
+<tr><td><strong>No claim without a citation</strong></td><td>Every factual assertion about prior work, every market-structure claim, every method description carries a citation. Every citation appears in the reference list; every reference list entry is cited.</td></tr>
+</table>
+<p class="caption">Table 7.2 — Writing standards. The last three rows address the specific defects found in Part I: the citation gaps, the duplicated TOC, and the mismatched acronym table.</p>

@@ -1,0 +1,215 @@
+<div class="pb"></div>
+<h1 id="p1"><span class="hnum">I</span>Audit of the Current Proposal</h1>
+
+<p>Before adding anything, the existing material has to be understood precisely. This Part states what each document in the repository actually contains, maps the coverage of the four reference papers against the proposal's claims, and records every defect that must be corrected before the proposal can be submitted or defended.</p>
+
+<div class="lead">
+<p class="lbl">Headline finding</p>
+<p>The proposal is <strong>substantively sound but generically framed</strong>. Its architecture, methodology and evaluation plan are largely correct and defensible. The problem is not that the idea is wrong — it is that almost every specific claim in it has already been published by one of the four papers sitting in the same folder. As written, a reviewer who reads the proposal and then reads Wang (2026) or Dashtaki et al. (2025) would conclude that the proposal contributes no new method. The fix is a repositioning of the contribution from <em>architecture</em> to <em>scope, tiering, and an asset-class-split sentiment treatment</em> — which the four papers collectively leave open. Part II specifies that repositioning.</p>
+</div>
+
+<h2 id="p1-1">1.1 What is actually in the repository</h2>
+
+<table>
+<tr><th style="width:24%">Document</th><th style="width:15%">Type &amp; year</th><th>Substance</th></tr>
+<tr>
+  <td><strong>Capstone Project Proposal</strong><br><span class="small">"Cryptocurrency Price Prediction Using LSTM and News Sentiment Analysis"</span></td>
+  <td>BAIUST capstone proposal, Spring 2026 — 17 pages, incomplete</td>
+  <td>Introduction, motivation, problem statement, objectives, a five-paper literature table, four research questions, a seven-phase methodology, system architecture as five prose layers, FR/NFR lists, a testing matrix, a 64-day Gantt chart, and an ethics chapter. Contains placeholder images for the DFD, block diagram, release plan and Gantt chart.</td>
+</tr>
+<tr>
+  <td><strong>Wang (2026)</strong><br><span class="small">ICMRED Symposium</span></td>
+  <td>Peer-reviewed conference paper</td>
+  <td>95 engineered features (54 technical + 41 macro/cross-asset), six models (Ridge, RF, XGBoost, LightGBM, LSTM, GRU), three partitioning strategies (fixed 80/20, rolling over 38 windows, bull/bear regime split), SHAP + ablation, trading backtest. <strong>BTC only.</strong> No sentiment. Finds XGBoost beats LSTM and survives bear markets better.</td>
+</tr>
+<tr>
+  <td><strong>Dashtaki et al. (2025)</strong><br><span class="small">IEEE Access 13</span></td>
+  <td>Peer-reviewed journal paper</td>
+  <td>HSIF: dual-stream Transformer, FinBERT sentiment (pos/neu/neg) + 30 SHAP-selected technical indicators, bidirectional cross-attention, T=60 window, 97.48% accuracy, 26.64% return. <strong>BTC only.</strong> No macro factors. Owns the "cross-attention fusion" claim.</td>
+</tr>
+<tr>
+  <td><strong>Kreuzer et al. (2026)</strong><br><span class="small">Review of Derivatives Research 29(3)</span></td>
+  <td>Peer-reviewed journal paper</td>
+  <td>Loughran–McDonald financial dictionary extended with a 150-term GenAI-built crypto glossary, weighted by crypto density weight (CDW). 9,100 BTC + 5,400 ETH articles. Regression on CME futures returns with Newey–West errors. Finds BTC futures driven by BTC news, ETH futures driven by <em>BTC</em> news.</td>
+</tr>
+<tr>
+  <td><strong>Wang &amp; Huang (2026)</strong><br><span class="small">Applied Artificial Intelligence 40(1)</span></td>
+  <td>Peer-reviewed journal paper</td>
+  <td>Hybrid SVR + four rule-based technical strategies (buy-and-hold, Bollinger, MA crossover, KD-MACD), sliding-window feature construction, 13 indicators, BTC/ETH/XRP/LTC 2018–2020. SVR, RF and LSTM compared. <strong>Multi-asset, but no sentiment and no macro factors.</strong></td>
+</tr>
+</table>
+<p class="caption">Table 1.1 — Repository inventory and the substantive contribution of each source.</p>
+
+<h2 id="p1-2">1.2 Coverage map: what each source already solves</h2>
+
+<p>This is the single most important table in this document. It is the evidence base for the repositioning in Part II. Read the right-hand column as the list of things the project may <em>not</em> claim as novel.</p>
+
+<table class="tight">
+<tr>
+  <th style="width:19%">Capability the proposal claims</th>
+  <th style="width:12%">Already done by</th>
+  <th>Why the claim collapses</th>
+</tr>
+<tr>
+  <td>Deep-learning price model (LSTM) with sentiment</td>
+  <td>Dashtaki 2025</td>
+  <td>HSIF is a stronger version of exactly this: LSTM is explicitly a beaten baseline in its Table 7, where it is reported to have strong classification scores but <em>negative financial returns</em>. Any proposal whose headline model is LSTM is starting from a position the literature has already shown to be economically inferior.</td>
+</tr>
+<tr>
+  <td>Cross-attention / Transformer fusion of market + sentiment</td>
+  <td>Dashtaki 2025</td>
+  <td>Owned explicitly. The HSIF paper's own novelty statement is "bidirectional cross-attention mechanism" for "hard" (market) and "soft" (sentiment) information fusion. Any proposal using this mechanism must cite it as prior art and cannot present the mechanism as a contribution.</td>
+</tr>
+<tr>
+  <td>Multi-source feature fusion (technical + macro) improves accuracy</td>
+  <td>Wang 2026</td>
+  <td>Wang's core result is that fusion beats every single-source configuration for all six models, with XGBoost RMSE improving ~13.5% over technical-only. This is the "synergy" finding, already published, on BTC.</td>
+</tr>
+<tr>
+  <td>Rolling-window validation + bull/bear regime analysis</td>
+  <td>Wang 2026</td>
+  <td>Wang's three partitioning strategies are fixed 80/20, 38-window rolling, and regime split. His headline methodological complaint about the literature — that "validation schemes overlook the reality of time's passage" — is now answered by his own paper. Repeating it is not a gap.</td>
+</tr>
+<tr>
+  <td>Backtesting with Sharpe ratio and max drawdown</td>
+  <td>Wang 2026; Wang &amp; Huang 2026</td>
+  <td>Both papers report annualised return, volatility, Sharpe and drawdown against a buy-and-hold benchmark. The proposal's FR6 and its "economic value" claims are standard practice, not novelty.</td>
+</tr>
+<tr>
+  <td>SHAP-based feature selection and interpretability</td>
+  <td>Wang 2026; Dashtaki 2025</td>
+  <td>Dashtaki prunes 52 → 36 by correlation then 36 → 30 by SHAP. Wang uses SHAP on XGBoost and runs ablation groups. Both are prior art.</td>
+</tr>
+<tr>
+  <td>Multi-cryptocurrency validation</td>
+  <td>Wang &amp; Huang 2026</td>
+  <td>Already done across BTC, ETH, XRP, LTC. The proposal cannot present multi-asset validation as its contribution.</td>
+</tr>
+<tr>
+  <td>Financial-dictionary sentiment with crypto-specific weighting</td>
+  <td>Kreuzer 2026</td>
+  <td>The CDW (crypto density weight) mechanism — weighting sentiment by the crypto-relevance of an article — is precisely the proposal's stated intent to fix "sentiment relies only on low-frequency, passive proxies". Already implemented and published.</td>
+</tr>
+<tr>
+  <td>Social-media sentiment from X/Twitter</td>
+  <td>Dashtaki 2025</td>
+  <td>HSIF uses 104,000+ tweets from 8 curated accounts with FinBERT. The proposal's headline plan — "collects real-time sentiment data from social media (X/Twitter, Reddit) and crypto news portals via their APIs" — is the HSIF pipeline.</td>
+</tr>
+<tr>
+  <td>Sentiment–return relationship with regression and lagged structure</td>
+  <td>Kreuzer 2026</td>
+  <td>Kreuzer finds contemporaneous positive relation, significant <em>negative</em> t−3 coefficient (overreaction then correction), asymmetry between positive and negative sentiment, and a wait-and-see reversal delay. RQ3 in the proposal is answered by a stronger, better-identified study.</td>
+</tr>
+<tr>
+  <td><strong>Cross-asset sentiment contagion</strong></td>
+  <td><span class="tag t-grn">OPEN</span></td>
+  <td><strong>Not yet done.</strong> Kreuzer's most striking finding — ETH futures returns are driven by <em>BTC</em> news sentiment rather than ETH news sentiment — is reported as a side observation and never converted into a predictive model or a contagion framework. No source paper models sentiment spillover.</td>
+</tr>
+<tr>
+  <td><strong>Asset-class stratification of sentiment sensitivity</strong></td>
+  <td><span class="tag t-grn">OPEN</span></td>
+  <td><strong>Not yet done.</strong> No source paper separates large-cap, mid-cap and high-risk/new listings in its sentiment analysis or reports whether the sentiment-to-return elasticity differs by tier. Every source uses one or two mature assets (or one flat multi-asset set with no tier logic).</td>
+</tr>
+<tr>
+  <td><strong>Regime-conditional sentiment reliability</strong></td>
+  <td><span class="tag t-amb">PARTIAL</span></td>
+  <td>Wang tests regime effects on <em>model performance</em> (XGBoost vs LSTM). No source conditions the <em>sentiment-to-return relationship itself</em> on regime — i.e. whether sentiment matters more in bull vs bear vs high-volatility states. Kreuzer does report "results hold for different market phases" but does not interact sentiment with regime.</td>
+</tr>
+<tr>
+  <td><strong>Sentiment-aware regime detection</strong></td>
+  <td><span class="tag t-grn">OPEN</span></td>
+  <td><strong>Not yet done.</strong> Regime is currently inferred from price alone (bull/bear by price). Using sentiment to <em>detect</em> the regime — then predicting within it — is a genuine systems contribution.</td>
+</tr>
+</table>
+<p class="caption">Table 1.2 — Claim-by-claim coverage map. Rows marked OPEN are the only defensible territory for a new contribution.</p>
+
+<div class="warn">
+<p class="lbl">The single most damaging sentence in the current proposal</p>
+<p>Section 3 states: <em>"No cross-asset contagion or systemic risk modeling exists, as cryptocurrencies are treated independently."</em> This is the strongest and most defensible gap identified in the document, and it is the one the team should build the entire project around. It is also the gap that survives all four papers: Wang (2026) is BTC-only with macro context but no other crypto; Dashtaki et al. (2025) are BTC-only; Wang &amp; Huang (2026) treat four assets independently with no cross-asset modelling; Kreuzer et al. (2026) is the only source with two assets and it observes contagion in a regression rather than modelling it.</p>
+</div>
+
+<h2 id="p1-3">1.3 Defect register for the current proposal</h2>
+
+<table class="tight">
+<tr><th style="width:5%">#</th><th style="width:24%">Defect</th><th style="width:8%">Severity</th><th>Required correction</th></tr>
+<tr><td>D1</td><td><strong>Title promises only LSTM + news sentiment</strong>, while the entire methodology, literature review and system design are about multi-source fusion, macro factors, walk-forward validation, SHAP and backtesting. The title and body describe different projects.</td><td><span class="tag t-red">Critical</span></td><td>Retitle. A supervisor reading only the title will scope-mark against a one-model sentiment study and find the body full of material outside that scope. See §2.2 for the proposed title and a fallback ladder.</td></tr>
+<tr><td>D2</td><td><strong>Research gap claims novelty that Dashtaki et al. (2025) already published</strong> — the proposal's gap list does not cite the HSIF paper at all, despite it being in the repository and being the closest work.</td><td><span class="tag t-red">Critical</span></td><td>Add HSIF to the literature table and treat it as the primary competitor. State plainly which specific claims are superseded and which are not.</td></tr>
+<tr><td>D3</td><td><strong>Three of four research questions are already answered</strong> by the repository papers. RQ1 (how accurately can LSTM predict) is answered by Wang 2026 Table 4. RQ2 (does sentiment improve accuracy) is answered by Dashtaki 2025 Table 6 and Wang &amp; Huang's framing. RQ3 (relationship between sentiment and price) is answered by Kreuzer 2026 Table 2 with better identification.</td><td><span class="tag t-red">Critical</span></td><td>Rewrite all four RQs to target the OPEN rows of Table 1.2. §2.3 gives replacement RQs and hypotheses.</td></tr>
+<tr><td>D4</td><td><strong>LSTM is the wrong headline model.</strong> Two independent sources show tree ensembles outperform LSTM on crypto: Wang (2026) finds XGBoost more resilient than LSTM under regime shift and in bear markets; Dashtaki (2025) finds LSTM-family models achieve negative financial returns where the attention model does not.</td><td><span class="tag t-red">Critical</span></td><td>Make the tree ensemble the primary model and LSTM/GRU a benchmark. If LSTM is retained as primary, the thesis must pre-empt the "why not XGBoost" question with a strong answer, because a reviewer will ask it.</td></tr>
+<tr><td>D5</td><td><strong>Research Objectives and Research Questions are misaligned</strong> with each other and with the literature review. The objectives are all LSTM-specific ("build an LSTM model", "compare with moving averages"); the RQs are broader; the lit review gaps are about macro integration, frequency decomposition and contagion.</td><td><span class="tag t-amb">High</span></td><td>Rewrite objectives and RQs as one consistent set. The moving-average comparison should become a naive baseline alongside random-walk, not the headline comparison.</td></tr>
+<tr><td>D6</td><td><strong>The proposal describes a "frequency-decomposition method" as a literature gap</strong> (Problem Statement item 5: "Frequency-decomposition methods oversimplify price dynamics into only two (high/low) groups"), and cites Zhang et al. (2026) EMD work — but neither the methodology nor the literature review ever uses decomposition. This is an inherited gap from a template, not a gap this project addresses.</td><td><span class="tag t-amb">High</span></td><td>Delete the decomposition claim, or adopt the wavelet/EMD feature layer that Part IV specifies. If it is deleted, also remove Zhang et al. from the primary gap list and keep it as a secondary citation.</td></tr>
+<tr><td>D7</td><td><strong>Problem Statement item 4 says "no cross-asset contagion or systemic risk modelling exists" but the Solution Statement never mentions cross-asset modelling</strong>, cross-asset features, lead–lag analysis or contagion testing. The solution does not answer the problem.</td><td><span class="tag t-red">Critical</span></td><td>Either implement the contagion module (Part IV §4.3 specifies it) or remove the claim. Given it is the strongest available gap, implement it.</td></tr>
+<tr><td>D8</td><td><strong>No hypotheses.</strong> The proposal has RQs but no testable, falsifiable propositions with stated direction and significance level. For a research proposal this is a structural absence.</td><td><span class="tag t-red">Critical</span></td><td>Add H1–H5 with explicit direction, test statistic and α. §2.3 supplies them.</td></tr>
+<tr><td>D9</td><td><strong>Evaluation metrics mix incompatible families without a task definition.</strong> RMSE/MAE/SMAPE are regression metrics; DSTAT and Sharpe are directional and financial. Nothing in the proposal states whether the target is a price level, a log return, or a direction label — yet the metrics and the model families differ accordingly.</td><td><span class="tag t-red">Critical</span></td><td>Fix the prediction target first (§6.1): log return for the regression track, binary direction for the classification track. Then assign metrics to tasks. Never report RMSE on a classification model.</td></tr>
+<tr><td>D10</td><td><strong>No baselines.</strong> "Compare with simpler methods (like moving averages)" is not enough. Without a random-walk and a persistence benchmark, every headline accuracy number is uninterpretable.</td><td><span class="tag t-amb">High</span></td><td>Fix the six-model ladder with four baselines: naive random walk, moving average, Ridge, and a sentiment-free variant. §6.3.</td></tr>
+<tr><td>D11</td><td><strong>Acronym table is scrambled and contains errors</strong> — "LTSM" for LSTM, "OHCLV", "CER" mapped to "Certainty Equivalent Return" but placed against the SMAPE row, "DSTAT" mapped to "A linux command line tool" while SHAP is mapped to "Shapley Additive Explanation", "VADER" mapped to "Federal Reserve Economic Data", "FRED" to "Valence Aware Dictionary…", "API" to "Shapley Additive Explanations", "BTC" to "Application Programming Interface", "NLTK" to "Bitcoin", "ETH" to "Etherium".</td><td><span class="tag t-red">Critical</span></td><td>Rebuild the table from scratch. Use the corrected glossary in Appendix F. This table alone would signal carelessness to an examiner.</td></tr>
+<tr><td>D12</td><td><strong>Five placeholder images are unresolved</strong> — the Data Flow Diagram, the Model Architecture Diagram, the Experimental Design block diagram, the Release Plan and the Gantt chart all render as empty frames in the proposal body.</td><td><span class="tag t-red">Critical</span></td><td>All five must be drawn and embedded. Part IV and Part V specify the content of each. The block diagram and DFD are the most heavily weighted artefacts in any software capstone examination.</td></tr>
+<tr><td>D13</td><td><strong>Acronyms and metrics used in the body before definition</strong> — DSTAT, CER, Sharpe, SMAPE and MACD are never defined. DSTAT in particular is used in the proposal as if it were directional accuracy, but the acronym list maps it to a Linux command-line tool, indicating it was copied from an unrelated source.</td><td><span class="tag t-amb">High</span></td><td>Define every metric with its formula at first use, and use the exact terms: DA (directional accuracy), MCC, F1, Sharpe, Sortino, MaxDD, CER.</td></tr>
+<tr><td>D14</td><td><strong>Diebold–Mariano test is named but no test statistic, null hypothesis or implementation is specified</strong>, and the same applies to the SHAP explanation (which is named in three places but no method given).</td><td><span class="tag t-amb">High</span></td><td>Specify the DM test precisely (§6.6) — including the horizon, the loss differential, and the small-sample correction — and specify SHAP as TreeSHAP for the XGBoost model and KernelSHAP for the LSTM model.</td></tr>
+<tr><td>D15</td><td><strong>70/15/15 chronological split with a T-day lookback window is under-specified on leakage.</strong> With a 60-day lookback, a naive split on raw rows leaks: the first rows of the validation set draw their lookback from the training set, and any scaler fitted on the full sample leaks future distribution.</td><td><span class="tag t-red">Critical</span></td><td>Enforce an embargo/purge gap of at least T days at every split boundary, fit the scaler on the training fold only, and use walk-forward validation as the primary protocol (§6.4).</td></tr>
+<tr><td>D16</td><td><strong>"System Architecture" is five prose paragraphs</strong> — no data flow, no component boundaries, no interfaces, no deployment view. Section 7.6 shows a heading "Data Flow Diagram (DFD)" with an empty figure and a heading "Model Architecture Diagram" with no figure.</td><td><span class="tag t-red">Critical</span></td><td>Replace with the six-layer architecture of Part III §3.2, a context diagram, a DFD Level-0 and Level-1, and a deployment view.</td></tr>
+<tr><td>D17</td><td><strong>Functional requirements are truncated mid-sentence</strong> — FR7 reads "Generate charts and reports showing sentiment trends, predicted vs. actual price movement. high-" and the text breaks off; the ID/description column alignment in §7.3 is scrambled so that FR descriptions appear against the wrong IDs.</td><td><span class="tag t-amb">High</span></td><td>Rewrite the FR table with clean columns. Part IV specifies each FR as a testable interface contract.</td></tr>
+<tr><td>D18</td><td><strong>Non-functional requirements are unusable as written</strong> — the requirement text is split across mismatched category rows ("Performance | Process daily/intraday data updates with prediction latency under" runs into "Security"). There is no measurable target.</td><td><span class="tag t-amb">High</span></td><td>Rewrite each NFR with a number and a measurement method: p95 latency ≤ X ms, pipeline success ≥ Y%, uptime, recovery time, memory ceiling.</td></tr>
+<tr><td>D19</td><td><strong>Testing table (§7.9) is misaligned</strong> — "Cross-asset testing" appears inside the Purpose column of the Robustness row, and test types are shuffled against purposes.</td><td><span class="tag t-amb">High</span></td><td>Rebuild as a proper traceability matrix: Test ID → Layer → Requirement → Method → Pass criterion.</td></tr>
+<tr><td>D20</td><td><strong>Ethical chapter is strong but unsupported by the pipeline design</strong> — it promises anonymisation of user content, bot/spam detection, bias checks across sources, and no identifiable usernames. No module in §7.2 or §7.8 does any of these, and the plan to use X/Twitter and Reddit APIs is not reconciled with the free-tier constraint.</td><td><span class="tag t-amb">High</span></td><td>Align the ethics claims with what the system actually does. Under the free-tier regime, replace "X/Twitter API" with RSS/news aggregation, and drop user-level claims that the design does not implement. §8.1 gives the corrected commitments.</td></tr>
+<tr><td>D21</td><td><strong>Plagiarism/AI-detection appendix is appended to an academic proposal</strong> and makes claims ("similarity index remained within the department's required limit of 20%", "AI-generated content score of 8.5%") that read as results of a formal institutional check performed by the student. It is better removed and replaced with a supervisor-attestation page, or rewritten as a neutral statement of procedure without asserted scores.</td><td><span class="tag t-amb">High</span></td><td>Remove from the submitted document. If the department requires it, submit it as a separate unsigned attachment rather than a chapter. Do not assert a score the team did not obtain from the department.</td></tr>
+<tr><td>D22</td><td><strong>Reference list has an orphan entry and an uncited work.</strong> Entry 8 ("The dynamics of returns predictability in cryptocurrency markets") duplicates entry 7 (Bianchi, Guidolin &amp; Pedio, 2023) as a bare title with no authors, and reference 6 (Bhambhwani et al., 2019) is never cited in the body.</td><td><span class="tag t-amb">High</span></td><td>Delete the duplicate entry; add in-text citations for every reference, or remove the uncited one. Run a reference audit before submission.</td></tr>
+<tr><td>D23</td><td><strong>Table of Contents is inconsistent with the document.</strong> The visible contents block lists "Problem Statement — 17" and omits Sections 3–11, while a second, more complete TOC appears below it with different numbering. Two TOCs, two different structures.</td><td><span class="tag t-amb">High</span></td><td>Delete the manual contents block and generate the TOC from the document. Also fix the orphaned chapter headings visible in the extracted text ("Introduction", "Project/Research Motivation", "Problem Statement" appearing as unnumbered body headings).</td></tr>
+<tr><td>D24</td><td><strong>Gantt chart rows carry no dates.</strong> Every row has duration and day numbers but the Start and End columns are empty, so the timeline cannot be read against the Spring 2026 term.</td><td><span class="tag t-amb">High</span></td><td>Populate start/end calendar dates. The schedule in Part V is date-anchored and can be mapped directly.</td></tr>
+<tr><td>D25</td><td><strong>Section 7.1 "Research-Based Experimental Design" table is a phase list, not an experimental design</strong> — it describes activities ("Reviewed existing research", "Collected price data") in past tense, describing work already done rather than work to be performed.</td><td><span class="tag t-amb">High</span></td><td>Rewrite in future tense as an executable plan with inputs, outputs and exit criteria, mapped to Part V phase gates.</td></tr>
+<tr><td>D26</td><td><strong>Section 9 (Tools) duplicates section 7.8 (Tools) with different contents</strong>, and the two lists disagree — §7.8 includes XGBoost, §9 does not mention SHAP in the same way, and the "Development Environment" line appears in both.</td><td><span class="tag t-amb">Medium</span></td><td>Merge into a single table with columns: Layer / Tool / Version / Purpose / Justification. Part V §5.1 and Appendix A supply the pinned versions.</td></tr>
+<tr><td>D27</td><td><strong>Deployment plan explicitly disclaims production</strong> — "no production-grade server hosting required, as this is a research/model validation project". This is defensible but it removes the "system" deliverable that a capstone usually requires.</td><td><span class="tag t-amb">Medium</span></td><td>Replace with the containerised pipeline + API + dashboard specified in Part III. The scope is still research-grade, but it is a genuine deployable system, which materially strengthens the submission.</td></tr>
+<tr><td>D28</td><td><strong>No risk register.</strong> The proposal contains an ethics chapter but no technical, data or schedule risk analysis — despite the schedule being 64 days with three students and depending on several third-party APIs.</td><td><span class="tag t-amb">Medium</span></td><td>Add the risk register in Part VIII §8.3 with likelihood, impact, mitigation and an owner for each risk.</td></tr>
+<tr><td>D29</td><td><strong>Acronym list includes non-acronyms and mislabels items</strong> — "DSTAT | A linux command line tool" appears to be a description of a different project entirely, and "LTSM" is a typo for LSTM.</td><td><span class="tag t-red">Critical</span></td><td>Rebuilt in Appendix F. Apply the same correction to every inline usage.</td></tr>
+<tr><td>D30</td><td><strong>No reproducibility contract.</strong> The proposal mentions "fixed random seeds" and "version-controlled notebooks" in §7.7 but specifies no seed, no environment pinning, no artefact retention policy and no run identifier scheme.</td><td><span class="tag t-amb">Medium</span></td><td>Adopt the contract in §6.7 and Appendix A: pinned lockfile, recorded seeds, immutable artefact naming, manifest per run.</td></tr>
+</table>
+<p class="caption">Table 1.3 — Defect register. D1–D3, D7–D9, D11–D12, D15 and D29 are Critical: each of them alone would materially damage the proposal under examination.</p>
+
+<h2 id="p1-4">1.4 Overstated novelty claim</h2>
+
+<p>Section 5 of the proposal closes with the following sentence, and it is the most dangerous paragraph in the document:</p>
+
+<div class="warn">
+<p><em>"Despite these advances, no existing study integrates blockchain fundamentals, high-frequency multi-source sentiment, macroeconomic indicators, and advanced forecasting techniques within a single unified framework."</em></p>
+</div>
+
+<p>This is factually false against the repository. Wang (2026) integrates technical indicators, macro variables and cross-asset ratios in a single framework. Dashtaki et al. (2025) integrate market indicators and sentiment in a single framework. The claim asserts a gap that two of the four papers in the same folder already fill. An examiner who asks "has anyone done this?" — which is the one question a capstone defence always asks — receives an answer the student cannot support.</p>
+
+<p>The fix is not to soften the claim. It is to <strong>replace the claim with a true and more specific one</strong>. The true claim is narrower and considerably stronger, because it is defensible line by line:</p>
+
+<div class="ok">
+<p class="lbl">Recommended replacement for the §5 closing paragraph</p>
+<p><em>"Recent work has established that sentiment-augmented market models (Dashtaki et al., 2025), technical–macroeconomic fusion (Wang, 2026), crypto-specific sentiment weighting (Kreuzer et al., 2026) and multi-asset evaluation (Wang &amp; Huang, 2026) each improve cryptocurrency forecasting. However, these lines of work remain separated: each treats the cryptocurrency universe either as a single asset to be predicted, or as a set of assets to be predicted independently, with sentiment treated as a uniform exogenous input. No study models the <em>structure</em> of the sentiment channel across the asset class — specifically, whether the sentiment-to-return relationship differs systematically by asset tier, whether sentiment spills over from large-cap to high-beta assets with a measurable lag, or whether the reliability of sentiment itself is conditional on the prevailing market regime. This research addresses these gaps by developing a tier-stratified, regime-aware, contagion-aware forecasting framework that treats sentiment as a structured, asset-dependent signal rather than a uniform feature vector."</em></p>
+</div>
+
+<h2 id="p1-5">1.5 Internal inconsistencies</h2>
+
+<p>Beyond the missing components, several statements contradict one another within the document:</p>
+
+<table>
+<tr><th style="width:38%">Location A</th><th style="width:38%">Location B</th><th>Conflict</th></tr>
+<tr><td>§3 Problem Statement — "Prediction models use structured price/volume (OHLCV) data only, ignoring unstructured text-based sentiment signals"</td><td>§7.2 System Features — sentiment collection from X/Twitter and Reddit</td><td>§3 describes the state of the art, §7.2 describes the proposed system, but the problem statement is written as if it were the proposal's own limitation. A reader cannot tell which sentence describes the gap and which describes the contribution.</td></tr>
+<tr><td>§4 — "compare the LSTM model's results with simpler methods (like moving averages)"</td><td>§7.11 — models include RF, XGBoost, LSTM and GRU, with baselines being "weekly Google Trends-only" and "non-decomposed univariate"</td><td>Two incompatible experimental designs. The objectives section describes a single-model study; the methodology section describes a 6-model study. This is D5 and it propagates into the RQs.</td></tr>
+<tr><td>§7.5 Architecture layer 1 — "Yahoo Finance, Binance API (price/volume data)"</td><td>§9 — "Yahoo Finance, Binance API (price data)"</td><td>Minor, but the duplication signals the two sections were written independently.</td></tr>
+<tr><td>§10.1 — "do not store or report identifiable usernames, profiles, or personal information"</td><td>§7.11 — sentiment from X/Twitter and Reddit, which are inherently user-generated</td><td>As written the pipeline would store usernames unless explicitly hashed or dropped at ingestion. The commitment is only credible if the ingestion layer drops identifiers before persistence. Part IV §4.1 specifies this.</td></tr>
+<tr><td>§11 Conclusion — "high-frequency sentiment analysis"</td><td>§7.2 — "Daily/intraday sentiment index generation"</td><td>"High-frequency" is asserted without a stated sampling rate. Under the free-tier regime, the honest claim is "daily news-sentiment frequency with intraday aggregation available for the news layer". Overstating frequency is easy to catch and hard to defend.</td></tr>
+<tr><td>Acronym list — "CER | Certainty Equivalent Return" listed against the SMAPE row</td><td>§7.11 — "CER (Certainty Equivalent Return) for investment/economic performance"</td><td>The body is correct; the table is corrupted. This is the clearest evidence that the acronym table was not reviewed.</td></tr>
+</table>
+<p class="caption">Table 1.4 — Internal contradictions requiring reconciliation.</p>
+
+<h2 id="p1-6">1.6 Formatting and reference hygiene</h2>
+
+<ul>
+  <li><strong>Acronym table.</strong> Rebuild in full from Appendix F. Do not patch it in place — every row is suspect.</li>
+  <li><strong>Two tables of contents.</strong> Delete the manual one; auto-generate.</li>
+  <li><strong>Unnumbered body headings.</strong> "Introduction", "Project/Research Motivation" and "Problem Statement" appear as unnumbered headings separate from the numbered sections, producing three headings for the same content. Number consistently 1–11 and reference them in the TOC.</li>
+  <li><strong>Figure and table numbering.</strong> The proposal has "Fig (1)" and "Fig2" with inconsistent spacing and no table captions at all. Adopt the standard in §7.6: "Figure 3.1 —" with a caption below, "Table 3.2 —" with a caption above.</li>
+  <li><strong>References.</strong> Eighteen entries for a 17-page proposal is thin relative to the four papers in the repository, which cite 40+ each. Expand to 30–40 with the expanded reading list in Appendix G, ensuring every in-text claim about a gap is supported by a citation.</li>
+  <li><strong>Page numbering and headers.</strong> The proposal uses "N | Page" footers of inconsistent format. Adopt a single footer: chapter-page on the left, short title on the right.</li>
+  <li><strong>Language.</strong> The introduction is written in an explanatory register ("This means no single company or authority decides how it's managed") appropriate for a general audience, not a research proposal. Section 1 should be rewritten to define the research problem and its significance, not define what cryptocurrency is.</li>
+</ul>
+
+<div class="ok">
+<p class="lbl">Summary of Part I</p>
+<p>The proposal has a sound skeleton and an incomplete fill. Fourteen of the thirty recorded defects are Critical. None of them require new research to fix — they require a re-framing, a rebuild of the requirements and acronym artefacts, and the addition of the four components that are genuinely absent: hypotheses, a prediction-task definition, a baseline set, and a cross-asset contagion module. Part II specifies the re-framing; Parts III–VI specify the build that fills the gaps.</p>
+</div>

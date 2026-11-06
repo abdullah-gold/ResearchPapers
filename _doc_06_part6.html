@@ -1,0 +1,238 @@
+<div class="pb"></div>
+<h1 id="p6"><span class="hnum">VI</span>Experiment Matrix &amp; Statistical Protocol</h1>
+
+<p>Part V says <em>what</em> to build. This Part specifies exactly what to run and what would count as a result. Its purpose is to make the evaluation impossible to argue with: every question in §2.3 maps to a specific experiment with a specific unit of analysis, a specific test, and a stated decision rule.</p>
+
+<h2 id="p6-1">6.1 Target and label definition</h2>
+
+<table class="tight">
+<tr><th style="width:14%">Target</th><th style="width:24%">Definition</th><th style="width:16%">Task type</th><th>Use</th></tr>
+<tr><td><strong>y_ret</strong></td><td><code>log(close[t+1] / close[t])</code></td><td>Regression</td><td>The primary target. Continuous, stationary, and directly convertible into a trading signal and a financial metric.</td></tr>
+<tr><td><strong>y_dir</strong></td><td><code>1 if y_ret &gt; 0 else 0</code></td><td>Classification</td><td>Secondary. Direction is what most papers report, and it lets you compare directly with Dashtaki et al. (2025)'s accuracy figures. Report balanced accuracy, not raw accuracy alone.</td></tr>
+<tr><td><strong>y_ret_5d</strong></td><td><code>log(close[t+5] / close[t])</code></td><td>Regression</td><td>Horizon robustness. A sentiment signal that works at 1 day but not at 5 days has a short half-life — itself a finding worth reporting.</td></tr>
+</table>
+<p class="caption">Table 6.1 — Target definitions. Fixing these once, at the start, prevents the D9 defect (mixing regression and classification metrics) from reappearing.</p>
+
+<div class="warn">
+<p class="lbl">Why log returns and not price levels</p>
+<p>A model trained to predict the <em>price level</em> of a crypto asset will appear to achieve very low RMSE, because the price is a large number and a large absolute error is a small percentage error. RMSE on price levels is uninterpretable and is not comparable across assets or across time. Wang (2026) predicts log returns; Wang &amp; Huang (2026) compare on price. <strong>Predict log returns.</strong> If the thesis must report a price-level metric for comparability with a specific cited paper, report it in a clearly separated table with the percentage-error framing stated.</p>
+</div>
+
+<h2 id="p6-2">6.2 Nested feature sets</h2>
+
+<p>Feature sets are <strong>nested</strong>, which is what makes the incremental-value tests clean: each set strictly contains the previous one, so any performance difference is attributable to the added block and nothing else.</p>
+
+<table class="tight">
+<tr><th style="width:7%">Set</th><th style="width:26%">Contents</th><th style="width:13%">Approx. size</th><th>Question it answers</th></tr>
+<tr><td><strong>F1</strong></td><td>Technical indicators only (price + volume)</td><td>~30</td><td>How much does price and volume alone explain? This is the field's traditional baseline.</td></tr>
+<tr><td><strong>F2</strong></td><td>F1 + macro &amp; cross-market</td><td>~40</td><td>Does macro add value over technical? (Wang 2026 found yes — this is our control condition.)</td></tr>
+<tr><td><strong>F3</strong></td><td>F2 + own-asset sentiment</td><td>~48</td><td>Does sentiment add value? This is the RQ2/H1 test at the model level.</td></tr>
+<tr><td><strong>F4</strong></td><td>F3 + cross-asset sentiment (contagion)</td><td>~55</td><td>Does <em>other assets'</em> sentiment add value beyond our own? This is the RQ3/H3 test — the key new experiment.</td></tr>
+<tr><td><strong>F5</strong></td><td>F4 + regime features</td><td>~58</td><td>Does regime conditioning add value? This is the RQ4/H4 test and C3's mechanism.</td></tr>
+</table>
+<p class="caption">Table 6.2 — Nested feature sets. F1 ⊂ F2 ⊂ F3 ⊂ F4 ⊂ F5.</p>
+
+<div class="box">
+<h4>Two sets that must also be run</h4>
+<p><strong>F3b — sentiment without the crypto weighting.</strong> Identical to F3 but using the plain Loughran–McDonald score instead of <code>SentCrypto</code>. The F3 vs F3b comparison <em>is</em> RQ1/H1 at the model level, and it directly extends Kreuzer et al. (2026)'s finding from regression to prediction.</p>
+<p><strong>F4b — cross-asset sentiment at lag 0 only.</strong> F4 with all lagged cross-asset features removed. Comparing F4 to F4b isolates the contribution of the <em>lag structure</em> specifically, rather than merely showing that cross-asset sentiment is useful. Without this comparison, H3 is not testable.</p>
+</div>
+
+<h3>Minimum tier sample sizes</h3>
+<p>Before running anything, compute the achievable sample size per tier. This is a power calculation, and doing it <em>before</em> the experiments prevents an underpowered study from being interpreted as a null result.</p>
+<pre>
+n_tier = (# assets in tier) × (# usable days per asset)
+
+Minimum requirements:
+  n_T1 ≥ 2500 observations     n_T2 ≥ 1500     n_T3 ≥ 800
+If a tier falls short:
+  (a) extend the sample window earlier (if history permits), or
+  (b) merge tiers for the pooled test and report the tier split as exploratory, or
+  (c) report the tier result as underpowered, explicitly.
+Never silently proceed with an underpowered tier test.
+</pre>
+
+<h2 id="p6-3">6.3 Model ladder and baselines</h2>
+
+<p>The nine models of §4.4 run against every feature set and every validation scheme. Baselines B1–B3 are not optional decoration — they are what makes the headline numbers meaningful.</p>
+
+<div class="grid3">
+<div class="card">
+<h4>Baselines</h4>
+<ul>
+<li><strong>B1</strong> Random walk</li>
+<li><strong>B2</strong> MA / Bollinger rule</li>
+<li><strong>B3</strong> Ridge</li>
+</ul>
+<p class="small">If a model does not beat B1 out-of-sample, say so plainly.</p>
+</div>
+<div class="card">
+<h4>Classical ML</h4>
+<ul>
+<li><strong>M1</strong> Random Forest</li>
+<li><strong>M2</strong> XGBoost <em>(primary)</em></li>
+<li><strong>M3</strong> LightGBM</li>
+</ul>
+<p class="small">Fixed hyperparameter search budget; SHAP for attribution.</p>
+</div>
+<div class="card">
+<h4>Deep &amp; multimodal</h4>
+<ul>
+<li><strong>M4</strong> LSTM</li>
+<li><strong>M5</strong> GRU</li>
+<li><strong>M6</strong> Attention fusion</li>
+<li><strong>M7</strong> Regime router</li>
+</ul>
+<p class="small">M6 is the closest competitor; M7 is C3's mechanism.</p>
+</div>
+</div>
+
+<h3>Fair-comparison rules</h3>
+<ul>
+  <li><strong>Equal tuning budget.</strong> Same number of configurations searched per model family. Document the budget in the results table.</li>
+  <li><strong>Equal information.</strong> Every model sees the same feature set when they are compared to each other. If M6 gets a richer feature set than M2, the comparison confounds architecture with features — report the like-for-like comparison as the headline and the richer comparison as supplementary.</li>
+  <li><strong>Equal seeds.</strong> 5 seeds for the reported configurations of every model.</li>
+  <li><strong>Naive baselines get no tuning</strong> (they have none to get) but do get the same information: the random-walk baseline predicts the zero return, and the MA rule is evaluated on the same out-of-sample windows as the models.</li>
+</ul>
+
+<h2 id="p6-4">6.4 Validation strategies</h2>
+
+<table class="tight">
+<tr><th style="width:17%">Scheme</th><th style="width:24%">Definition</th><th style="width:13%">Role</th><th>Why it is in the design</th></tr>
+<tr><td><strong>V1</strong> Fixed chronological</td><td>70 / 15 / 15, expanding window, embargoed boundaries</td><td>Quick check</td><td>Cheap; reproduces the convention of the four source papers so results are comparable. <strong>Never report it alone.</strong></td></tr>
+<tr><td><strong>V2</strong> Walk-forward</td><td>Expanding train, 252-day test folds, 61-row embargo, ~38 folds</td><td><strong>Primary</strong></td><td>The honest simulation of live operation. Fold count matches Wang (2026) for comparability.</td></tr>
+<tr><td><strong>V3</strong> Purged walk-forward</td><td>Fixed-length rolling train window (e.g. 504 days), embargoed</td><td>Robustness</td><td>Tests whether results depend on an expanding (ever-growing) training set — they usually do, and this exposes it.</td></tr>
+<tr><td><strong>V4</strong> Regime holdout</td><td>Train on bull periods, test on a contiguous bear period, and vice versa</td><td><strong>Stress test</strong></td><td>The hardest test. Directly addresses Wang (2026)'s finding that models degrade in bear markets, and it is the regime-shift scenario C3 is designed for.</td></tr>
+<tr><td><strong>V5</strong> Asset holdout</td><td>Train on T1+T2 assets, test on held-out T3 assets</td><td><strong>Generalisation</strong></td><td>The single most important test for a multi-tier project: does a model trained on deep markets transfer to thin ones? This is where the tier structure becomes a prediction claim rather than a description.</td></tr>
+</table>
+<p class="caption">Table 6.3 — Validation schemes. V5 is unusual and valuable: it converts the tier analysis from descriptive into predictive, and it is the test that makes C1 more than a description of the past.</p>
+
+<h2 id="p6-5">6.5 Metric definitions</h2>
+
+<h3>Regression (on y_ret)</h3>
+<table class="tight">
+<tr><th style="width:20%">Metric</th><th style="width:34%">Formula</th><th>Note</th></tr>
+<tr><td>RMSE</td><td>√( (1/n) Σ (y − ŷ)² )</td><td>Scale-dependent; compare only within the same target and asset.</td></tr>
+<tr><td>MAE</td><td>(1/n) Σ |y − ŷ|</td><td>More robust to the heavy tails of crypto returns.</td></tr>
+<tr><td>R²</td><td>1 − SS_res/SS_tot</td><td>Compare with Ridge's ~0.06 (Wang 2026) — a low ceiling is normal in this domain and stating it contextualises the result.</td></tr>
+<tr><td><strong>DA</strong> (directional accuracy)</td><td>(1/n) Σ 1[sign(ŷ) = sign(y)]</td><td><strong>The most important regression metric here.</strong> It is what the trading strategy consumes.</td></tr>
+<tr><td>IC (information coefficient)</td><td>Spearman rank correlation of (ŷ, y)</td><td>Standard in quant finance; directly comparable with published work.</td></tr>
+</table>
+
+<h3>Classification (on y_dir)</h3>
+<table class="tight">
+<tr><th style="width:20%">Metric</th><th style="width:34%">Formula</th><th>Note</th></tr>
+<tr><td>Accuracy</td><td>(TP+TN)/n</td><td>Report with balanced accuracy. <strong>Do not headline it alone.</strong></td></tr>
+<tr><td>Balanced accuracy</td><td>½ (recall(pos) + recall(neg))</td><td>The primary classification metric. Insensitive to class imbalance.</td></tr>
+<tr><td>F1</td><td>2·TP/(2·TP + FP + FN)</td><td>Comparable with Dashtaki et al. (2025)'s F1 figures.</td></tr>
+<tr><td><strong>MCC</strong></td><td>(TP·TN − FP·FN)/√((TP+FP)(TP+FN)(TN+FP)(TN+FN))</td><td>Comparable with Dashtaki et al. (2025). Robust under imbalance.</td></tr>
+<tr><td>AUC-ROC</td><td>—</td><td>Threshold-free; use it to judge whether the model's <em>ranking</em> is informative even when a fixed threshold is not.</td></tr>
+</table>
+
+<h3>Financial (from the backtest)</h3>
+<p>Annualised return, annualised volatility, Sharpe, Sortino, MaxDD, CER, turnover, and the number of trades — as specified in §4.6.2. Every financial table includes a buy-and-hold row for the same asset and window.</p>
+
+<div class="box">
+<h4>Metrics to use instead of the ones the proposal lists</h4>
+<p><strong>DSTAT</strong> — not a standard term; the intended meaning is directional accuracy. <strong>CER</strong> — define precisely (§4.6.2) or omit. <strong>SMAPE</strong> — problematic near zero on returns; use it on price levels only, or drop it. <strong>SHAP</strong> — not a metric but an interpretability method; it does not belong in a metrics list. <strong>R² on a directional model</strong> — undefined; do not report it.</p>
+</div>
+
+<h2 id="p6-6">6.6 Significance testing and multiplicity control</h2>
+
+<table class="tight">
+<tr><th style="width:20%">Comparison</th><th style="width:26%">Test</th><th style="width:16%">Unit of analysis</th><th>Decision rule</th></tr>
+<tr><td>Model A vs Model B (nested)</td><td>Diebold–Mariano on loss differentials, HBL correction</td><td>Per asset, pooled per tier</td><td>Reject at α = 0.05 after Benjamini–Hochberg adjustment within the comparison family</td></tr>
+<tr><td>Sentiment measure: CDW vs plain</td><td>Nested regression; t-test on the coefficient difference</td><td>Panel, with asset-clustered / Driscoll–Kraay errors</td><td>α = 0.05; report the difference with a bootstrap CI</td></tr>
+<tr><td>Tier elasticity ordering (H2)</td><td>Jonckheere–Terpstra trend test on per-tier slopes</td><td>Panel</td><td>α = 0.05; reject if the ordering is not monotone</td></tr>
+<tr><td>Contagion significance</td><td>Newey–West adjusted test of cross-correlation</td><td>Ordered asset pairs</td><td>α = 0.05, Benjamini–Hochberg across all pairs</td></tr>
+<tr><td>Regime interaction (H4)</td><td>Regression with sentiment × regime interactions</td><td>Panel</td><td>α = 0.05 on the interaction coefficient</td></tr>
+<tr><td>Economic significance</td><td>Bootstrap CI on the Sharpe difference; net-of-cost comparison</td><td>Strategy-level</td><td>Report the CI; claim significance only if it excludes zero</td></tr>
+<tr><td>Does sentiment cause returns?</td><td>Granger causality (with a caveat)</td><td>Panel</td><td>Supporting evidence only — <strong>never state causality from this test</strong></td></tr>
+</table>
+<p class="caption">Table 6.4 — Statistical tests, with the unit of analysis stated for each.</p>
+
+<div class="warn">
+<p class="lbl">Three statistical cautions for the thesis</p>
+<p><strong>1. Granger causality is not causality.</strong> It tests incremental predictability, not a causal mechanism. If you report it, report it as predictive precedence and explicitly state that it does not establish a causal channel. A reviewer will check for exactly this overreach, because "the sentiment causes the price" is the most tempting and most indefensible sentence in the whole project.</p>
+<p><strong>2. Multiple comparisons.</strong> With ~20 assets × 3 tiers × 9 models, the raw comparison count is in the hundreds. Without correction, a 5% significance level produces false positives by the dozen. Benjamini–Hochberg is the minimum defence, and stating the correction in the thesis is itself a mark of rigour.</p>
+<p><strong>3. Endogeneity and reverse causality.</strong> A negative return produces negative news, which produces negative sentiment. So sentiment and returns are jointly determined, and the contemporaneous association is not cleanly interpretable. Kreuzer et al. (2026) address this by excluding pure market-update feeds from their corpus. Adopt that exclusion — <strong>filter out articles whose content is primarily a market recap</strong> — and document it. It is a small implementation detail with a large effect on the credibility of RQ3.</p>
+</div>
+
+<h2 id="p6-7">6.7 Reproducibility contract</h2>
+
+<p>Every reported number must be traceable to a run. The contract below makes that mechanically true.</p>
+
+<h3>Run manifest — one per experiment run</h3>
+<pre>
+{
+  "run_id": "exp_20260514_0031",
+  "timestamp_utc": "2026-05-14T09:12:44Z",
+  "git_commit": "a3f9c21",
+  "git_dirty": false,
+  "config_hash": "sha256:7b2e...",      # hash of the resolved config
+  "env_hash": "sha256:requirements.lock",
+  "data_fingerprint": {
+    "prices": "sha256:...", "sentiment": "sha256:...",
+    "raw_manifest_count": 143, "raw_manifest_oldest": "2026-05-13T02:00:02Z"
+  },
+  "seeds": {"global": 42, "model": [42, 43, 44, 45, 46]},
+  "models": [{"id": "M2_xgboost", "version": "v3", "params": {...}}],
+  "feature_sets": ["F1", "F2", "F3", "F4", "F5"],
+  "validation": {"scheme": "V2", "folds": 38, "embargo": 61},
+  "metrics": {"per_asset": {...}, "per_tier": {...}, "per_regime": {...}},
+  "artefacts": {"model": "models/registry/M2_xgboost/", "figure": "reports/fig_3_2.png"},
+  "runtime_sec": 1841
+}
+</pre>
+
+<h3>The rules</h3>
+<ul>
+  <li><strong>Seeds are recorded, not assumed.</strong> Global seed + per-model seeds, both in the manifest.</li>
+  <li><strong>Dirty-tree runs are flagged</strong> and excluded from the reported results. <code>git_dirty: false</code> is a precondition for including a run in the thesis.</li>
+  <li><strong>Environment is pinned</strong> with hashes. Not a <code>requirements.txt</code> with loose version ranges — a lockfile.</li>
+  <li><strong>Data is fingerprinted.</strong> The hash of the input parquet files is in the manifest, so a result can be tied to an exact data snapshot.</li>
+  <li><strong>One command reproduces.</strong> <code>make experiment RUN_ID=exp_20260514_0031</code> re-executes that exact configuration.</li>
+  <li><strong>The registry is the source of truth.</strong> Every table and figure in the thesis is generated from the registry by <code>scripts/build_report.py</code>. No number is typed by hand into a document. This is the single highest-leverage discipline in the project: it eliminates transcription errors and makes every claim verifiable.</li>
+</ul>
+
+<h2 id="p6-8">6.8 Expected result tables</h2>
+
+<p>These are the tables the thesis must contain. Each is generated from the registry.</p>
+
+<table class="tight">
+<tr><th style="width:6%">No.</th><th style="width:26%">Table</th><th style="width:30%">Columns</th><th>Answers</th></tr>
+<tr><td>T1</td><td>Descriptive statistics</td><td>Per asset: n, mean, sd, min, quartiles, max for returns, sentiment, volume; per tier summary</td><td>Descriptive grounding; data-quality evidence</td></tr>
+<tr><td>T2</td><td>Sentiment measure comparison</td><td>Crypto-density-weighted vs Loughran–McDonald vs raw: mean, sd, correlation, κ, benchmark accuracy</td><td><strong>RQ1 / H1</strong></td></tr>
+<tr><td>T3</td><td>Contagion lead–lag matrix</td><td>Rows = source asset, columns = sink asset × lag; entries = ρ with significance marks</td><td><strong>RQ3</strong>; the cross-asset structure</td></tr>
+<tr><td>T4</td><td>Tier attenuation</td><td>Mean |ρ| by tier-pair (T1→T1, T1→T2, T1→T3, T2→T2, T2→T3, T3→T3) with CIs</td><td><strong>C2's structural finding</strong></td></tr>
+<tr><td>T5</td><td>Main model comparison</td><td>Rows = 9 models × 5 feature sets; columns = RMSE, MAE, R², DA, IC, per tier</td><td>The headline table</td></tr>
+<tr><td>T6</td><td>Nested feature-set increment</td><td>F1→F2→F3→F4→F5 increments in each metric, with DM p-values and BH-adjusted p-values</td><td><strong>RQ2, RQ3, RQ4 / H2, H3, H4</strong></td></tr>
+<tr><td>T7</td><td>Regime decomposition</td><td>Per regime (bull/bear, trending/ranging, high/low vol): DA and RMSE per model</td><td><strong>RQ4 / H4</strong></td></tr>
+<tr><td>T8</td><td>Validation robustness</td><td>V1–V5 × top 3 models: metric, mean ± sd across folds/seeds</td><td>Whether results survive different validation schemes</td></tr>
+<tr><td>T9</td><td>Trading performance</td><td>Per model: annualised return, vol, Sharpe, Sortino, MaxDD, CER, turnover, #trades — at 4 cost levels</td><td><strong>RQ5 / H5b</strong>; economic validity</td></tr>
+<tr><td>T10</td><td>Benchmark comparison</td><td>Proposed model vs buy-and-hold vs MA rule vs random walk, same windows</td><td>Economic validity against non-model benchmarks</td></tr>
+<tr><td>T11</td><td>Ablation</td><td>Drop each feature family in turn; Δmetric and significance</td><td>Which components actually matter</td></tr>
+<tr><td>T12</td><td>SHAP / attribution</td><td>Top 20 features by |SHAP| per tier; sentiment-family features highlighted</td><td>Interpretability; mechanism</td></tr>
+</table>
+<p class="caption">Table 6.5 — The required table inventory. Twelve tables, all registry-generated.</p>
+
+<h3>Companion figure inventory</h3>
+<table class="tight">
+<tr><th style="width:8%">Fig</th><th style="width:34%">Content</th><th>Chapter</th></tr>
+<tr><td>F1</td><td>System context diagram</td><td>Ch. 3 — system architecture</td></tr>
+<tr><td>F2</td><td>Level-0 data flow</td><td>Ch. 3</td></tr>
+<tr><td>F3</td><td>Feature-store ER / schema diagram</td><td>Ch. 3</td></tr>
+<tr><td>F4</td><td>Data pipeline sequence diagram</td><td>Ch. 3</td></tr>
+<tr><td>F5</td><td>Gantt chart (populated with real dates)</td><td>Ch. 1</td></tr>
+<tr><td>F6</td><td>Price, sentiment and regime over time for a representative asset</td><td>Ch. 5</td></tr>
+<tr><td>F7</td><td>Contagion network graph</td><td>Ch. 5</td></tr>
+<tr><td>F8</td><td>Lead–lag heatmap</td><td>Ch. 5</td></tr>
+<tr><td>F9</td><td>Rolling performance across walk-forward folds</td><td>Ch. 6</td></tr>
+<tr><td>F10</td><td>Predicted vs actual returns (all folds, pooled)</td><td>Ch. 6</td></tr>
+<tr><td>F11</td><td>Equity curves vs buy-and-hold, per tier</td><td>Ch. 6</td></tr>
+<tr><td>F12</td><td>Drawdown comparison</td><td>Ch. 6</td></tr>
+<tr><td>F13</td><td>SHAP summary beeswarm for the primary model</td><td>Ch. 6</td></tr>
+<tr><td>F14</td><td>Tier elasticity comparison (H2)</td><td>Ch. 6</td></tr>
+<tr><td>F15</td><td>Sentiment vs forward-return scatter with tier colouring</td><td>Ch. 5</td></tr>
+</table>
+<p class="caption">Table 6.6 — Figure inventory. Fifteen figures. Note F14 and F15: these are the two that carry the contribution, and they must be visually unmistakable in the thesis.</p>

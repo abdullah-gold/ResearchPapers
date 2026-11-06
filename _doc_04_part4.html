@@ -1,0 +1,367 @@
+<div class="pb"></div>
+<h1 id="p4"><span class="hnum">IV</span>Module Specifications</h1>
+
+<p>Each module below states its purpose, its interface, its implementation notes, and — most importantly — its failure modes. A specification that lists only what a module does is half a specification; the failure modes are what determine whether the research survives contact with real data.</p>
+
+<h2 id="p4-1">4.1 Ingestion layer (L1)</h2>
+
+<h3>4.1.1 Shared HTTP client</h3>
+<p>Every network call in the system goes through one client. This is not over-engineering — rate limiting and retry are the difference between a pipeline that completes and one that dies on a 429 in week two.</p>
+<pre>
+class HttpClient:
+    def get(self, url, params=None, headers=None) -> Response
+    def get_json(self, url, params=None) -> dict
+    def get_with_backoff(self, url, *, max_attempts=5, backoff="exponential",
+                         base_delay=1.0, respect_retry_after=True) -> Response
+</pre>
+<ul>
+  <li><strong>Backoff:</strong> exponential with jitter, capped at 60 s. Honours <code>Retry-After</code> when present — several free endpoints send it and ignoring it gets the IP throttled.</li>
+  <li><strong>Per-host rate limiting:</strong> a token bucket per host, configured in <code>config/sources.yaml</code>. Default 1 request/second, 10 requests/minute for FRED, 20/minute for CoinGecko free tier.</li>
+  <li><strong>Circuit breaker:</strong> after 5 consecutive failures against a host, open the circuit for 15 minutes and mark the source degraded. Prevents one dead endpoint from consuming the entire run's time budget.</li>
+  <li><strong>Timeout:</strong> connect 10 s, read 45 s. A hung request must not hold a slot in the rate limiter.</li>
+</ul>
+
+<h3>4.1.2 Exchange price collector</h3>
+<pre>
+GET https://api.binance.com/api/v3/klines
+    ?symbol=BTCUSDT&amp;interval=1d&amp;startTime=...&amp;limit=1000
+</pre>
+<ul>
+  <li><strong>Pagination:</strong> paginate backwards from the present until the requested start date, one 1000-row page at a time. 2020-01-01 → 2026 is ~2,400 days, so ~3 pages per asset. Trivial, but must be implemented.</li>
+  <li><strong>Symbol mapping:</strong> the config uses <code>BTC/USDT</code>; Binance wants <code>BTCUSDT</code>. Map centrally, never ad hoc.</li>
+  <li><strong>Invalid-symbol handling:</strong> Binance returns HTTP 400 with <code>"Invalid symbol"</code> for unknown pairs. Catch this specifically, mark the symbol as unavailable, and continue. Do not treat it as a transient error — retrying a delisted pair 5 times wastes a minute per asset.</li>
+  <li><strong>Market-cap ranking is a separate call</strong> from <code>/api/v3/ticker/24hr</code> or CoinGecko. Binance volume ≠ market cap, so tier assignment must use CoinGecko for market cap and Binance for volume.</li>
+</ul>
+
+<div class="warn">
+<p class="lbl">Failure mode: the delisted-asset trap</p>
+<p>T3 assets are, by definition, new and short-lived. Some will be delisted during the project. A collector that treats a delisting as a fatal error will fail the whole run for one dead coin. A collector that silently skips it will produce a panel with a gap that looks like a data outage rather than a delisting. <strong>Record delistings explicitly</strong> with a status field and surface them in the dashboard's data-quality panel. A delisted asset is a legitimate observation about the risk profile of T3 assets and is worth reporting.</p>
+</div>
+
+<h3>4.1.3 News RSS collector</h3>
+<ul>
+  <li><strong>Parsing:</strong> <code>feedparser</code> handles RSS and Atom. Each feed yields entries with title, summary/content, published date, link, source.</li>
+  <li><strong>Full text:</strong> RSS <code>summary</code> is often a truncated first paragraph. Full article text requires fetching and parsing the article page, which is slow and fragile. <strong>Decision:</strong> use headline + summary for the primary corpus, and document it as a limitation. Kreuzer et al. (2026) used full article bodies and noted that headline-only approaches are used elsewhere in the literature — so this is a defensible, citable design choice, provided it is stated.</li>
+  <li><strong>Timezone normalisation:</strong> RSS timestamps arrive in mixed timezones and formats. Parse to UTC, then truncate to the UTC calendar date. A news item published at 23:50 UTC belongs to that UTC date, and the date boundary convention must be stated in the thesis.</li>
+  <li><strong>Asset attribution:</strong> an article is assigned to an asset if the asset's symbol or name appears in the headline/summary. Use word-boundary matching on a curated alias list (<code>BTC</code>, <code>Bitcoin</code>, <code>XBT</code>). Handle the alias case explicitly: "ETH" is a common substring — match on word boundaries, never substring containment, or "ETH" matches "whether" and every article about anything becomes ETH news.</li>
+  <li><strong>De-duplication:</strong> the same story is syndicated across feeds. De-duplicate on a normalised title hash (lowercase, strip punctuation and stopwords) before scoring, or one event will be counted several times and inflate the daily article count.</li>
+</ul>
+
+<h3>4.1.4 Macro collector and the release-date problem</h3>
+<p>FRED series have <em>release dates</em> that differ from <em>observation dates</em>. A CPI print for March 2024 is released in mid-April. Using the observation date in a feature creates a look-ahead bias of weeks — the model would "know" the CPI value before it was published, which is the kind of error that produces spectacular backtest results and a failed defence.</p>
+<div class="box">
+<h4>The rule</h4>
+<p style="margin-bottom:0">Every macro series is stored with <strong>both</strong> <code>observation_date</code> and <code>release_date</code>, and the alignment engine joins on <code>release_date</code>. If a release date is unavailable for a series, use the standard convention of a documented lag offset (e.g. CPI released ~2 weeks after month end, unemployment ~1 week after) and state the offset in the data dictionary. This single decision protects the integrity of every macro feature in the project.</p>
+</div>
+
+<h3>4.1.5 Orchestration</h3>
+<p>The daily job runs a fixed stage graph: <code>price → macro → news → sentiment_proxy → onchain → features → registry</code>. Each stage declares its inputs and outputs so the orchestrator can run only the stale stages — if price data is fresh but news is not, only news is re-collected. The run writes a manifest and exits non-zero if a source is degraded for more than three consecutive days, which is the trigger for the risk mitigation in Part VIII.</p>
+
+<h2 id="p4-2">4.2 Sentiment engine (L2)</h2>
+
+<p>This is the module that determines whether the project answers RQ1, so it is specified in full detail and must be implemented exactly as described — it is the direct reimplementation and extension of Kreuzer et al. (2026), and any deviation must be documented as a deviation.</p>
+
+<h3>4.2.1 Stage 1 — Tokenisation and cleaning</h3>
+<ul>
+  <li>Lowercase; strip URLs, HTML entities and markdown; collapse whitespace.</li>
+  <li>Tokenise; remove a standard English stopword list.</li>
+  <li><strong>Lemmatise</strong> to match Kreuzer et al. (2011-based) methodology. Use NLTK's WordNet lemmatiser.</li>
+  <li>Keep the token stream available for density computation — the crypto-density weight is computed on the <em>pre-stopword</em> token list, since crypto terms are content words and would survive stopword removal anyway. State the convention explicitly.</li>
+</ul>
+
+<h3>4.2.2 Stage 2 — Baseline financial sentiment (the comparison arm)</h3>
+<p>Implement the <strong>Loughran–McDonald (2011) financial sentiment dictionary</strong>: positive, negative and negated word lists. Score as in Kreuzer et al. (2026):</p>
+<pre>
+Sent_i = (#positive words − #negative words) / #all words        →  [−1, +1]
+</pre>
+<p>The dictionary is freely available from the McDonald lab (Loughran-McDonald Financial Sentiment Dictionary, <code>LoughranMcDonald_SentimentWordLists_2018.xlsx</code>). Download it once, vendor it into <code>data/reference/</code>, and record the version and checksum in the data card. Do not rely on a live download at runtime.</p>
+<p>This is the <strong>baseline arm</strong> for RQ1 and must be implemented independently of the crypto arm, not derived from it.</p>
+
+<h3>4.2.3 Stage 3 — The crypto lexicon</h3>
+<p>Build a crypto-specific dictionary of approximately 150 terms, following Kreuzer et al. (2026). Sources to combine:</p>
+<ul>
+  <li>Glossaries from established crypto reference sites (terms, categories, and — critically — which are sentiment-bearing and which are neutral topic words).</li>
+  <li>The Bitcoin whitepaper (Nakamoto, 2008) for technical terminology.</li>
+  <li>Crypto-relevant academic literature, including the four papers in this repository.</li>
+  <li>Terms harvested from the project's own news corpus: tokens that appear disproportionately in crypto news relative to general financial news are crypto-specific by construction.</li>
+</ul>
+
+<div class="box">
+<h4>Critical distinction the lexicon must respect</h4>
+<p>In Kreuzer et al. (2026) the crypto dictionary serves a <strong>different purpose</strong> from the financial dictionary, and conflating the two will break the method. Words like <em>blockchain</em>, <em>bitcoin</em>, <em>altcoin</em>, <em>whale</em>, <em>rug pull</em> are <strong>topic markers</strong>, not sentiment terms — they carry no positive or negative polarity in themselves. They are used to compute the <em>crypto density</em>, which then <em>weights</em> the sentiment score. Words like <em>crash</em>, <em>surge</em>, <em>scam</em>, <em>hack</em>, <em>ban</em> are <strong>sentiment-bearing</strong> and may appear in the crypto dictionary, but they also often appear in the financial dictionary, which is where the polarity is applied.</p>
+<p style="margin-bottom:0"><strong>Implementation:</strong> maintain two lists — <code>CRYPTO_TOPIC_TERMS</code> (for density) and <code>CRYPTO_SENTIMENT_TERMS</code> (crypto-specific polarity that the financial dictionary misses, e.g. <em>rug pull</em>, <em>rekt</em>, <em>moon</em>, <em>FUD</em>). Each term must be assigned to exactly one list, and the assignment must be reviewed by at least two team members and recorded in the lexicon file with a comment justifying the polarity choice. This lexicon is a genuine research artefact — it goes in the appendix with its construction protocol (Appendix D).</p>
+</div>
+
+<h3>4.2.4 Stage 4 — Crypto density weight</h3>
+<pre>
+CDW_i = n_crypto(i) / n_total(i)        # crypto-specific terms / total terms in article i
+</pre>
+<p>Note on the denominator: Kreuzer et al. define density over <em>sentences</em> in one formulation and over <em>terms</em> in another. Implement over terms (sentence counts require a parser and add noise), and document the departure. The property that matters — density measures how crypto-relevant an article is — is preserved.</p>
+
+<h3>4.2.5 Stage 5 — Crypto-weighted sentiment</h3>
+<pre>
+SentCrypto_i = CDW_i × Sent_i
+</pre>
+<p>Then aggregate to a daily per-asset score by arithmetic mean over that asset's articles for the day:</p>
+<pre>
+SentCrypto_{asset,day} = (1/N) × Σ_{i=1..N} ( CDW_i × Sent_i )
+</pre>
+
+<h3>4.2.6 Stage 6 — Aggregation and derived sentiment features</h3>
+<ul>
+  <li>Daily mean over the asset's articles (matching Kreuzer et al.).</li>
+  <li>Also compute: mean positive fraction, mean neutral fraction, mean negative fraction, mean CDW, article count, source count.</li>
+  <li>Derived: EWMA with 3-day half-life, rolling z-score over 60 days, 1-day and 5-day momentum.</li>
+  <li><strong>Carry-forward rule:</strong> on a day with zero articles for an asset, carry the previous day's value forward but set a binary <code>sent_stale</code> flag. Do <strong>not</strong> silently interpolate. Kreuzer et al. note that ~90% of classified articles are negative, so missingness is not random and treating it as random would bias the series.</li>
+  <li><strong>Negative-sample bias:</strong> with a ~90% negative article base rate, the daily mean sentiment is structurally negative and its absolute level is not very informative. The <em>changes</em> and the <em>z-scores</em> are the informative parts. This is exactly why RQ2 should be formulated in terms of elasticity and interaction coefficients rather than raw levels — and it is worth stating explicitly in the thesis, because it shows you understood the measurement rather than just running the pipeline.</li>
+</ul>
+
+<h3>4.2.7 Stage 7 — Validation of the sentiment layer</h3>
+<p>Before any model is trained, the sentiment module must pass these checks:</p>
+<table class="tight">
+<tr><th style="width:34%">Check</th><th>Requirement</th></tr>
+<tr><td>Manual labelling agreement</td><td>Two team members independently label a random sample of 200 articles positive / neutral / negative. Report Cohen's κ. Expect κ ≥ 0.6; below 0.4, the lexicon needs work before proceeding.</td></tr>
+<tr><td>Known-polarity validation</td><td>Score a benchmark set of finance-domain sentences with known polarity (e.g. the Financial PhraseBank). Report accuracy and F1. A crypto dictionary should not <em>degrade</em> performance on general financial text by more than a few points.</td></tr>
+<tr><td>Face-validity spot check</td><td>Manually inspect the 10 most positive and 10 most negative scored articles. If the rankings look wrong, the pipeline is broken regardless of what the metrics say.</td></tr>
+<tr><td>Source-bias check</td><td>Compare sentiment distributions across feeds. A single feed dominating the corpus will make the "sentiment" measure a proxy for that feed's editorial policy.</td></tr>
+<tr><td>Leakage audit</td><td>Assert that no sentiment feature for day <em>t</em> derives from an article published after the end of day <em>t</em>. Automated test, not manual.</td></tr>
+</table>
+<p class="caption">Table 4.1 — Sentiment module acceptance criteria. These are gates, not nice-to-haves: the model results are uninterpretable if the sentiment measure is unreliable.</p>
+
+<h2 id="p4-3">4.3 Feature engineering (L2)</h2>
+
+<h3>4.3.1 Technical indicators</h3>
+<p>Implement a curated set covering trend, momentum, volatility and volume. This is a reimplementation of standard indicators — cite the source of each formula in the data dictionary, do not present them as contributions.</p>
+<table class="tight">
+<tr><th style="width:16%">Family</th><th style="width:44%">Indicators</th><th>Windows</th></tr>
+<tr><td>Trend</td><td>SMA, EMA, WMA, MACD (line, signal, histogram), ADX/DMI, PSAR, linear-regression slope</td><td>5, 10, 20, 50, 200</td></tr>
+<tr><td>Momentum</td><td>RSI, stochastic %K/%D, Williams %R, CCI, ROC, momentum acceleration</td><td>5, 14, 21</td></tr>
+<tr><td>Volatility</td><td>ATR, Bollinger (upper/middle/lower/width/%B), realised volatility (5/20/60d), Parkinson &amp; Garman-Klass estimators</td><td>5, 14, 20, 60</td></tr>
+<tr><td>Volume</td><td>OBV, volume SMA ratio, MFI, VWAP deviation, volume-weighted momentum, on-balance-volume divergence</td><td>5, 20</td></tr>
+<tr><td>Derived</td><td>Bollinger breakout flag, RSI acceleration, MA-crossover flag, volatility-regime flag, drawdown from rolling peak, distance from 200d MA</td><td>derived</td></tr>
+</table>
+<p class="small">Realised volatility computed from log returns is the most useful single volatility feature for a market with 24/7 trading; the Parkinson and Garman-Klass estimators are included because they use high/low information and are standard in the volatility literature referenced by Kreuzer et al.</p>
+
+<h3>4.3.2 Macro and cross-market features</h3>
+<p>Macro series (from FRED, with release-date alignment): Fed funds rate, CPI, unemployment rate, real yield (TIPS 10y), broad dollar index, gold price, VIX, S&amp;P 500, NASDAQ. Derived macro features:</p>
+<ul>
+  <li><strong>Surprise variables:</strong> following Kreuzer et al. (2026), compute actual minus consensus. Consensus from FRED requires an extra series; where unavailable, use the change from the previous release as a proxy and <strong>label it as such</strong> — do not call a first-difference a surprise.</li>
+  <li><strong>Lagged macro:</strong> real yield at lags 1/3/5/10 (monetary policy transmits with a delay — the transmission lag is the point of including it).</li>
+  <li><strong>Standardised risk:</strong> VIX z-score, credit-spread proxy, yield spread (10y − 2y).</li>
+  <li><strong>Liquidity:</strong> Fed balance sheet − TGA − RRP, weekly change (as in Wang 2026).</li>
+  <li><strong>Equity linkage:</strong> DJIA/NASDAQ daily returns, gold returns, DXY returns — all lagged by one day to avoid same-day simultaneity assumptions.</li>
+</ul>
+
+<h3>4.3.3 Cross-asset contagion features — the core new module</h3>
+<p>This module implements contribution C2 and is the part of the system with no precedent in the four reference papers. It has three stages.</p>
+
+<div class="box">
+<h4>Stage 1 — Lead–lag estimation</h4>
+<p>For each ordered pair (i, j) of assets, and for each lag ℓ ∈ {0, 1, 2, 3, 5, 7, 10}, estimate the cross-correlation between sentiment of <em>i</em> at time <em>t</em> and the forward return of <em>j</em> at <em>t</em>:</p>
+<pre>
+ρ_{i→j}(ℓ) = corr( SentCrypto_{i,t},  y_ret_{j,t+ℓ} )
+</pre>
+<p>Estimate this <strong>on the training window only</strong>, then freeze the estimated lag structure for the test window. Estimating lead–lag on the full dataset and then using the resulting features in a test-set evaluation is leakage of the most consequential kind — it lets the model know in advance which cross-asset pair is predictive.</p>
+<p style="margin-bottom:0">Use a <strong>Newey–West adjusted</strong> test statistic on the correlation for significance, since daily financial series are serially correlated and a naive t-test will over-reject. Kreuzer et al. (2026) use exactly this correction for the same reason.</p>
+</div>
+
+<div class="box">
+<h4>Stage 2 — Contagion feature construction</h4>
+<p>For each asset <em>j</em> and each lag ℓ selected in stage 1, construct the feature:</p>
+<pre>
+xasset_{j,t}^{i,ℓ} = SentCrypto_{i, t−ℓ}         for each significant source i
+</pre>
+<p>Restrict to sources whose ρ is significant at α = 0.05 on the training window, and cap the number of retained sources per asset (e.g. top 3 by |ρ|) to control dimensionality and limit overfitting.</p>
+<p style="margin-bottom:0"><strong>Important control:</strong> include, for every asset <em>j</em>, the sentiment of the <em>other</em> assets at lag 0 as well as the lagged ones. If only significant-lag features are included, the model cannot distinguish "cross-asset sentiment helps" from "the specific lag structure helps" — and a reviewer will ask. Reporting both is what makes the H3 test clean.</p>
+</div>
+
+<div class="box">
+<h4>Stage 3 — Contagion intensity measurement</h4>
+<p>Beyond predictive features, quantify the <em>structure</em> of the contagion — this is the finding that goes in the thesis, not just the model:</p>
+<ul>
+  <li><strong>Tier attenuation:</strong> does ρ decay with tier distance (T1→T2 > T2→T3 > T1→T3)? Test with an ordered-group comparison.</li>
+  <li><strong>Network structure:</strong> build a directed weighted graph where edge weight is ρ_{i→j}(ℓ*). Report in-degree, out-degree and clustering coefficient per tier.</li>
+  <li><strong>Time variation:</strong> estimate the contagion strength in rolling windows to see whether it strengthens in high-volatility periods. This links C2 to C3 directly.</li>
+  <li><strong>Directionality:</strong> test whether sentiment flows predominantly from large-cap to small-cap, or whether the relationship is bidirectional. Kreuzer et al. (2026) find the BTC→ETH direction; whether that generalises downward is a genuine open question.</li>
+</ul>
+</div>
+
+<h3>4.3.4 Regime features</h3>
+<p>Regime detection is a prerequisite for C3. Implement two detectors and compare them, because comparing a price-only detector against a price-plus-sentiment detector <em>is</em> the experiment:</p>
+<table class="tight">
+<tr><th style="width:22%">Detector</th><th style="width:34%">Definition</th><th>Why it matters</th></tr>
+<tr><td><strong>D1 — Price-based</strong></td><td>Bull/bear by trailing 200-day return sign; trending/ranging by ADX &gt; 25; high/low volatility by 60-day realised vol vs its own 2-year median.</td><td>The standard used by Wang (2026). It is the <strong>baseline</strong> regime definition.</td></tr>
+<tr><td><strong>D2 — Price + sentiment</strong></td><td>The same market-state features augmented with sentiment regime signals: sentiment z-score level, sentiment 5-day momentum, sentiment volatility, and the cross-asset contagion activity level.</td><td>The novel detector. Tests whether sentiment adds information about <em>which regime we are in</em>, not just <em>where price goes</em>.</td></tr>
+</table>
+<p class="small">Regime labels are used two ways: as a <strong>conditioning variable</strong> (decompose performance by regime — H4) and as a <strong>feature</strong> (one-hot regime indicators in the model). Do both, and report them separately, because the first tests H4 and the second is C3's routing mechanism.</p>
+
+<h2 id="p4-4">4.4 Modelling layer (L3)</h2>
+
+<table class="tight">
+<tr><th style="width:7%">ID</th><th style="width:20%">Model</th><th style="width:20%">Family</th><th>Role in the study</th></tr>
+<tr><td>B1</td><td>Random walk (naive)</td><td>Baseline</td><td><strong>The number every other model must beat.</strong> Predicting zero return or the last close. If a sophisticated model does not beat this out-of-sample, the honest conclusion is that the market is efficient at this horizon.</td></tr>
+<tr><td>B2</td><td>Moving average / Bollinger rule</td><td>Baseline</td><td>Simple trend-following signal. Also serves as the trading benchmark in the style of Wang &amp; Huang (2026).</td></tr>
+<tr><td>B3</td><td>Ridge regression</td><td>Linear</td><td>The linear reference point. Reproduces Wang (2026)'s finding that linear models underperform badly on crypto (their R² ≈ 0.059).</td></tr>
+<tr><td>M1</td><td>Random Forest</td><td>Tree ensemble</td><td>Interpretable non-linear baseline.</td></tr>
+<tr><td>M2</td><td><strong>XGBoost</strong></td><td>Tree ensemble</td><td><strong>Primary model.</strong> Wang (2026) finds XGBoost the most accurate and most regime-robust; it gives SHAP values for free; it trains on CPU in minutes.</td></tr>
+<tr><td>M3</td><td>LightGBM</td><td>Tree ensemble</td><td>Checks that XGBoost's advantage is not an implementation artefact. Two implementations of the same family agreeing is a stronger claim than one.</td></tr>
+<tr><td>M4</td><td>LSTM</td><td>Deep sequence</td><td><strong>Benchmark, not the proposal.</strong> The original proposal's headline model. Report its results honestly — including the possibility that it loses to the tree models, which the literature predicts.</td></tr>
+<tr><td>M5</td><td>GRU</td><td>Deep sequence</td><td>Cheaper sequence baseline.</td></tr>
+<tr><td>M6</td><td>Attention fusion (HSIF-style)</td><td>Multimodal</td><td>Reimplementation of Dashtaki et al. (2025)'s dual-stream cross-attention. <strong>Your closest competitor.</strong> Implement it faithfully, cite it, and report where it succeeds and where it fails across tiers.</td></tr>
+<tr><td>M7</td><td>Regime router</td><td>Meta-model</td><td>C3's mechanism. Routes to a per-regime model or applies regime-conditional calibration to a global model. Compare against the global model under regime shift.</td></tr>
+</table>
+<p class="caption">Table 4.2 — Model ladder. Nine models, four of them baselines. The ladder is deliberately cross-paradigm, which is one of Wang (2026)'s explicit criticisms of the literature.</p>
+
+<div class="box">
+<h4>On M6 — the reimplementation requirement</h4>
+<p>Reimplementing HSIF is not optional and not a diversion: it is the control that establishes your improvements are relative to the strongest published multimodal competitor rather than to a weak baseline. Requirements for a defensible reimplementation:</p>
+<ul>
+  <li>Match the published architecture: dual-stream Transformer encoders (3 layers, 4 heads, 64-dim per head), bidirectional cross-attention, global average pooling, concatenation, dense + dropout + sigmoid, weighted BCE, early stopping.</li>
+  <li>Match the published protocol: T = 60-day lookback, min–max scaling per modality, chronological 70/15/15 split, F1-maximising threshold on validation.</li>
+  <li>Use the <strong>same feature sets</strong> as your other models so the comparison is architectural rather than featuristic. If M6 is evaluated on richer features than M2, any accuracy difference confounds architecture with features.</li>
+  <li>Report the published headline (97.48% accuracy on BTC) only if your reimplementation reproduces it approximately; if it does not, report the divergence as a reproducibility finding rather than hiding it.</li>
+</ul>
+<p style="margin-bottom:0">TensorFlow/Keras is the natural choice since that is what the original used. Note that the authors used a <em>sentiment embedding matrix</em> (FinBERT probability vectors). Since your sentiment arm is lexicon-based under the free-tier regime, you have two options: (a) use a classifier-free sentiment vector (pos/neu/neg proportions from the lexicon), which is a faithful architectural match with different inputs, or (b) add FinBERT as an optional encoder behind an interface, if you can run a transformer model locally. <strong>Choose (a) for the primary comparison</strong> and document that the sentiment encoder differs from the original, because that is the honest framing. Option (b) is a stretch task.</p>
+</div>
+
+<h3>4.4.1 Estimation details</h3>
+<ul>
+  <li><strong>Target:</strong> primary = next-day log return (regression). Secondary = binary direction (classification). Run both; they answer different questions and both are needed for the metrics in §6.5.</li>
+  <li><strong>Optimiser:</strong> Adam, learning-rate search {1e-3, 3e-4, 1e-4}, cosine decay or early stopping on validation loss (patience 10, restore best weights).</li>
+  <li><strong>Class imbalance:</strong> for the direction task, use <code>compute_sample_weight</code> or class weights; also tune the decision threshold on validation by F1 maximisation rather than defaulting to 0.5. This mirrors the published protocol and materially affects results on imbalanced crypto labels.</li>
+  <li><strong>Regularisation:</strong> dropout {0.1, 0.2, 0.3}, L2, early stopping. For tree models: max_depth, min_child_weight, subsample, colsample_bytree, and explicit early stopping on the validation fold.</li>
+  <li><strong>Search budget:</strong> a fixed budget per model (e.g. 30 configurations for trees via random search, 20 for deep models) so no model is advantaged by more tuning effort. Document the budget — a comparison where one model got 5 hyperparameter configurations and another got 200 is not a fair comparison and a reviewer will say so.</li>
+  <li><strong>Seeds:</strong> run the top 3 configurations with 5 seeds each and report mean ± standard deviation, as both Dashtaki et al. (2025) and Wang (2026) do. A single-run result is not a result.</li>
+</ul>
+
+<h2 id="p4-5">4.5 Evaluation and statistical protocol (L4)</h2>
+
+<h3>4.5.1 Walk-forward validation — the primary protocol</h3>
+<pre>
+  ┌──────────────┐                              ┌──────────────────────────────┐
+  │  TRAIN       │▓▓▓ EMBARGO ▓▓▓│    TEST      │      (repeat, rolling)      │
+  │  [0 ... t0]  │               │  (t0+61 ... t1]│                              │
+  └──────────────┘               └──────────────────┘                           │
+  ▲ fitted scaler              ▲ never touched during training                  │
+  ▲ feature selection          ▲ SHAP/importance recomputed per fold             │
+</pre>
+<pre>
+for each fold k:
+    train     = rows[0 : train_end_k]
+    embargo   = rows[train_end_k + 1 : train_end_k + 1 + embargo_len]
+    test      = rows[train_end_k + 1 + embargo_len : train_end_k + 1 + embargo_len + test_len]
+    fit scaler, feature selection and model on train ONLY
+    predict on test
+    record out-of-sample predictions with a fold manifest
+</pre>
+<p>Default configuration: expanding training window, 252-day test folds, 61-row embargo, ~38 folds over a 6-year sample — matching the fold count in Wang (2026) so the results are directly comparable. A <em>purged</em> walk-forward variant (fixed-length training window) should also be run as a robustness check.</p>
+
+<h3>4.5.2 Metric implementation notes</h3>
+<ul>
+  <li>Compute every metric <strong>from the concatenated out-of-sample predictions</strong>, not from an average of per-fold metrics. Averaging fold-level R² is meaningless.</li>
+  <li>Report metrics <strong>per asset, per tier, per regime</strong> and in aggregate. The decomposition is the deliverable.</li>
+  <li>For the direction task, report accuracy, balanced accuracy, precision, recall, F1, MCC, and the AUC-ROC. Report <strong>balanced accuracy</strong> alongside raw accuracy — with a class imbalance around 52/48 in crypto up/down days, raw accuracy is close to uninformative and a reviewer will notice that a headline accuracy sits near 50–55%.</li>
+  <li>For the return task, report RMSE, MAE, R², and <strong>directional accuracy computed from the sign of the predicted return</strong> — the economically meaningful metric even for a regression model.</li>
+  <li>Report SMAPE with care: it is undefined for zero values and blows up near zero, which daily crypto returns frequently are. If reported, compute it on price levels or on a sign-safe variant, and say which.</li>
+</ul>
+
+<h3>4.5.3 Statistical testing</h3>
+<ul>
+  <li><strong>Diebold–Mariano</strong> for nested model comparisons on loss differentials (squared or absolute error), with the small-sample Harvey–Leybourne–Newbold correction. Report the DM statistic and p-value per asset and per tier, plus a summary count of how many assets/tiers favour each model.</li>
+  <li><strong>Multiple testing:</strong> with ~20 assets × 3 tiers × several comparisons, the family-wise error rate inflates fast. Use the Benjamini–Hochberg procedure at q = 0.05 for the family of tier-level comparisons, and report both raw and adjusted p-values. <strong>State this explicitly in the thesis</strong> — a paper that runs 60 significance tests and reports the 2 that pass without correction is a paper that will be challenged.</li>
+  <li><strong>Effect sizes with confidence intervals:</strong> bootstrap CIs (block bootstrap, 1,000 resamples, respecting serial dependence) on the key effect estimates — the tier elasticity differences and the DM mean differentials.</li>
+  <li><strong>Effectively, this is a panel:</strong> consider a panel regression with tier fixed effects and interactions, with asset-clustered or Driscoll–Kraay standard errors (the latter account for cross-sectional correlation, which is exactly what contagion creates). If you find contagion, the residuals <em>will</em> be cross-sectionally correlated, and ignoring that produces over-confident standard errors.</li>
+</ul>
+
+<h2 id="p4-6">4.6 Backtesting and portfolio layer</h2>
+
+<h3>4.6.1 Simulation specification</h3>
+<ul>
+  <li><strong>Initial capital:</strong> 100,000 USD (matching both Dashtaki et al. (2025) and Wang (2026) so results are comparable).</li>
+  <li><strong>Transaction costs:</strong> 0.1% per operation (the rate used in the published Algorithm 1 of Dashtaki et al.). Add slippage as a separate scenario: 0 bps, 5 bps, 10 bps, 25 bps. A strategy that only works at zero slippage is not a finding.</li>
+  <li><strong>Position sizing:</strong> long/flat and long/short variants, with position sizing as a fraction of equity. Report both, because the long/short variant is where the sentiment signal's asymmetry shows up (Kreuzer et al. find asymmetric positive/negative responses).</li>
+  <li><strong>Benchmark:</strong> buy-and-hold of the same asset over the same window, mandatory in every table.</li>
+</ul>
+
+<h3>4.6.2 Metrics</h3>
+<table class="tight">
+<tr><th style="width:24%">Metric</th><th style="width:26%">Definition</th><th>Notes</th></tr>
+<tr><td>Total &amp; annualised return</td><td>(final − initial)/initial; annualised by √365</td><td>Crypto trades 365 days; annualise by √365, not by 252</td></tr>
+<tr><td>Annualised volatility</td><td>std(daily returns) × √365</td><td>—</td></tr>
+<tr><td>Sharpe ratio</td><td>mean(daily excess returns) / std(daily excess returns) × √365</td><td>Use a stated risk-free rate (0 or 4% — state which)</td></tr>
+<tr><td>Sortino ratio</td><td>mean / downside deviation × √365</td><td>Reported alongside Sharpe because crypto return distributions are heavily left-skewed</td></tr>
+<tr><td>Maximum drawdown</td><td>max peak-to-trough decline</td><td>The metric Wang (2026) uses to argue risk containment</td></tr>
+<tr><td><strong>CER</strong></td><td>CEQ return: the risk-free rate r such that the certainty-equivalent wealth growth equals the strategy's expected utility growth</td><td>Report the formula used; several variants exist and readers differ</td></tr>
+<tr><td>Turnover</td><td>Σ|Δposition| / days</td><td>Turnover-driven costs are the main destroyer of high-frequency sentiment strategies</td></tr>
+</table>
+
+<div class="warn">
+<p class="lbl">The CER trap — a live error in the current proposal</p>
+<p>The proposal lists CER as "Certainty Equivalent Return" with no formula. CER is computable in several different ways, and papers that report "CER" without specifying the formula are not comparable. The <strong>same problem appears in Wang (2026)</strong>, which reports a Sharpe ratio of 1.14 with an annualised return of 78.65% and volatility of 68.94% — but 78.65/68.94 = 1.14, which means their "Sharpe ratio" is computed as return ÷ volatility <em>without</em> annualising the mean return, making it a ratio of annualised quantities rather than the conventional ratio of mean daily excess return to the standard deviation of daily excess return scaled by √365. <strong>Do not copy either convention silently.</strong> Report the standard definition, state the risk-free rate, and additionally report the ratio-of-annualised-quantities variant so your numbers are comparable with the prior literature you are citing. Reproducing a source's number while fixing its method is defensible; silently copying its method is not.</p>
+</div>
+
+<h2 id="p4-7">4.7 API and dashboard (L5, L6)</h2>
+
+<h3>4.7.1 API endpoints</h3>
+<pre>
+GET  /healthz                          liveness + per-source freshness
+GET  /predict?asset=BTC/USDT&amp;horizon=1
+        → predicted return, direction probability, regime label,
+          sentiment snapshot, model version, confidence interval
+GET  /backtest?asset=...&amp;model=...&amp;cost_bps=10
+        → equity curve, metrics, drawdown series
+GET  /metrics?scope=tier|regime|asset&amp;model=...
+        → decomposed metric tables from the experiment registry
+GET  /sentiment?asset=...&amp;window=90
+        → sentiment series, components, article counts, source mix
+GET  /experiments                      → experiment registry listing
+GET  /models/{model_id}                → model card JSON
+</pre>
+<p>All responses are Pydantic-validated. The <code>/predict</code> endpoint returns the <strong>model version and training window</strong> with every prediction — without that, a served prediction is uninterpretable and untraceable.</p>
+
+<h3>4.7.2 Dashboard pages</h3>
+<table class="tight">
+<tr><th style="width:22%">Page</th><th>Content</th></tr>
+<tr><td>Overview</td><td>System status, per-source freshness, latest predictions across the universe, tier-level headline metrics</td></tr>
+<tr><td>Asset explorer</td><td>Price + sentiment + prediction overlay; regime shading; article feed with sentiment scores; feature contributions for the latest prediction</td></tr>
+<tr><td>Tier &amp; regime analysis</td><td>The C1/C3 dashboards: sentiment elasticity by tier, metric decomposition by regime, regime-conditional performance</td></tr>
+<tr><td>Contagion network</td><td>Directed graph of measured lead–lag structure; tier attenuation; rolling contagion intensity</td></tr>
+<tr><td>Backtest</td><td>Equity curves vs buy-and-hold; drawdown; cost sensitivity sweep; Sharpe/Sortino/CER table</td></tr>
+<tr><td>Experiment registry</td><td>Browse every run: config hash, seed, metrics per fold, artefact links</td></tr>
+<tr><td>Model cards</td><td>Per model: architecture, training window, feature list, metrics, known limitations</td></tr>
+</table>
+
+<div class="ok">
+<p class="lbl">The dashboard is a deliverable, not decoration</p>
+<p>In an examination, the dashboard is often the only artefact the examiner actually interacts with. The <em>Tier &amp; regime analysis</em> page and the <em>Contagion network</em> page are where your contribution lives; the rest is supporting evidence. Build those two pages to a standard the other pages are judged by, and make every chart traceable to a specific experiment run in the registry. If a chart cannot be linked to a run ID, it does not go on the dashboard.</p>
+</div>
+
+<h2 id="p4-8">4.8 Testing strategy</h2>
+
+<table class="tight">
+<tr><th style="width:14%">Test type</th><th style="width:32%">What it verifies</th><th style="width:26%">Method</th><th>Pass criterion</th></tr>
+<tr><td>Unit</td><td>Indicator, sentiment and metric functions are correct</td><td><code>pytest</code>, known-value fixtures</td><td>All pass; coverage ≥ 80% on <code>features/</code> and <code>evaluation/</code></td></tr>
+<tr><td><strong>Causality</strong></td><td>No feature uses future information</td><td>Property test: for every row <em>t</em>, recompute all features with the dataset truncated at <em>t</em> and assert equality</td><td>Zero mismatches. <strong>Highest-value test in the project.</strong></td></tr>
+<tr><td><strong>Leakage</strong></td><td>No train/test contamination</td><td>Assert embargo gaps present at every boundary; scaler fit range ⊂ train range</td><td>Zero violations</td></tr>
+<tr><td>Integration</td><td>Pipeline runs end to end on a small fixture</td><td>Full pipeline on 2 assets × 90 days</td><td>Completes with no errors; all expected artefacts written</td></tr>
+<tr><td>Contract</td><td>API responses match the schema</td><td>Schema validation on every response</td><td>All responses validate</td></tr>
+<tr><td>Golden</td><td>Refactors do not change results</td><td>Stored expected metrics for 2 fixed configs</td><td>Metrics match within 1e-6</td></tr>
+<tr><td>Performance</td><td>Meets the NFR targets</td><td>Load test on <code>/predict</code></td><td>p95 &lt; 250 ms</td></tr>
+<tr><td>Robustness</td><td>Degrades gracefully when sources fail</td><td>Inject synthetic source failures</td><td>Run completes; failures reported; no silent partial data</td></tr>
+<tr><td>Reproducibility</td><td>Same config + same seed → same result</td><td>Re-run and compare artefacts</td><td>Bitwise-identical metrics</td></tr>
+</table>
+<p class="caption">Table 4.3 — Test matrix. The causality and leakage tests are the ones that make the research credible; the others are standard engineering hygiene.</p>
+
+<div class="box">
+<h4>The causality test, in detail — implement this first</h4>
+<pre>
+def test_no_future_information(truncated_feature_frame):
+    """Recompute every feature at time t using ONLY data up to t.
+    If any feature changes, some transform is peeking forward."""
+    for t in sample_of_timestamps:
+        partial = load_raw_data(up_to=t)
+        recomputed = build_features(partial)
+        assert_allclose(recomputed.loc[t], features.loc[t], rtol=0, atol=0)
+</pre>
+<p style="margin-bottom:0">This single test will catch the majority of realistic leakage bugs — centred rolling windows, <code>df.shift(-1)</code>, global normalisation, forward-filled sentiment computed from the full series, or a scaler fitted on the whole dataset. It is also the artefact most likely to convince an examiner that the work is rigorous, and it is cheap to implement. Do it before the first model is trained, not after the results look wrong.</p>
+</div>

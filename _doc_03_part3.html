@@ -1,0 +1,491 @@
+<div class="pb"></div>
+<h1 id="p3"><span class="hnum">III</span>System Architecture</h1>
+
+<p>This Part specifies the software system to be built: what it does, how it is decomposed, where each component's data comes from, what it stores, and how it runs. The specification is constrained by three fixed conditions agreed for this project: a <strong>free-tier data regime</strong>, a <strong>research-grade</strong> (not production-trading) system, and a <strong>multi-tier asset universe</strong> spanning popular large-caps and high-risk/new listings.</p>
+
+<h2 id="p3-1">3.1 Design principles and non-negotiables</h2>
+
+<table>
+<tr><th style="width:24%">Principle</th><th>What it means concretely in this build</th></tr>
+<tr><td><strong>Reproducibility above all</strong></td><td>Every result in the thesis must be regenerable from a clean checkout by one command. No result may exist only in a notebook cell. This is the standard the repository papers set and the one that separates an acceptable capstone from a strong one.</td></tr>
+<tr><td><strong>Strict temporal causality</strong></td><td>No computation may ever read data with a timestamp later than the timestamp of the prediction being made. This is enforced in code, not by convention: the feature builder accepts a <code>as_of</code> parameter and every transform filters on it before it aggregates.</td></tr>
+<tr><td><strong>Free-tier survivability</strong></td><td>No component may hard-depend on a paid API. Every source has a documented fallback, and the pipeline must complete end-to-end with zero API keys configured. This is a hard constraint given the 64-day window and a student budget of zero.</td></tr>
+<tr><td><strong>Modularity and asset-agnosticism</strong></td><td>Adding an asset is a configuration change, never a code change. This is what makes the multi-tier panel — the core of contribution C1 — maintainable across the whole project.</td></tr>
+<tr><td><strong>Honest evaluation</strong></td><td>Baselines are tuned with the same effort as the proposed model. Metrics are reported per tier and per regime, never only in aggregate. Negative results are reported with the same prominence as positive ones.</td></tr>
+<tr><td><strong>Research-grade, not trading-grade</strong></td><td>The system produces signals and evidence, not orders. There is no exchange connectivity, no order routing, no live capital at risk. This boundary is stated on the dashboard and in the thesis.</td></tr>
+</table>
+<p class="caption">Table 3.1 — Design principles. Each one is a constraint that, if violated, produces a specific, named failure later.</p>
+
+<h2 id="p3-2">3.2 Layered architecture</h2>
+
+<p>Six layers. The boundary between L4 and L5 is the most important architectural decision in the system: <strong>the research pipeline never imports the serving code</strong>. This guarantees that no experiment can accidentally be contaminated by serving-time conveniences, and it means the API and dashboard can be rewritten without touching a single research result.</p>
+
+<div class="layer">
+  <div class="lt">L6 · Presentation</div>
+  <div class="lb"><span>Streamlit Dashboard</span><span>Sentiment &amp; price trends</span><span>Predicted vs actual</span><span>Per-tier / per-regime metric panels</span><span>Backtest equity curve</span><span>Experiment registry browser</span><span>Model-card viewer</span></div>
+</div>
+<div class="arrow">▲</div>
+<div class="layer">
+  <div class="lt">L5 · Serving</div>
+  <div class="lb"><span>FastAPI</span><span>/predict</span><span>/backtest</span><span>/metrics</span><span>/sentiment</span><span>/experiments</span><span>Model registry loader</span><span>Pydantic response schemas</span></div>
+</div>
+<div class="arrow">▲</div>
+<div class="layer">
+  <div class="lt">L4 · Research &amp; Evaluation</div>
+  <div class="lb"><span>Feature builder</span><span>Model ladder</span><span>Walk-forward validator</span><span>Hyperparameter search</span><span>DM test harness</span><span>Backtester</span><span>Ablation runner</span><span>Experiment tracker (MLflow-style, local)</span></div>
+</div>
+<div class="arrow">▲</div>
+<div class="layer">
+  <div class="lt">L3 · Modelling</div>
+  <div class="lb"><span>Baselines: Random Walk, MA, Ridge</span><span>Classical ML: RF, XGBoost, LightGBM</span><span>Deep: LSTM, GRU</span><span>Multimodal: attention fusion (HSIF-style)</span><span>Regime routing</span><span>Calibration (isotonic / Platt)</span></div>
+</div>
+<div class="arrow">▲</div>
+<div class="layer">
+  <div class="lt">L2 · Features &amp; Sentiment</div>
+  <div class="lb"><span>Technical indicators (30+)</span><span>Macro &amp; cross-asset</span><span>Derived / regime features</span><span>Sentiment: crypto lexicon + density weight</span><span>Feature store (Parquet)</span><span>Leakage guards</span></div>
+</div>
+<div class="arrow">▲</div>
+<div class="layer">
+  <div class="lt">L1 · Ingestion</div>
+  <div class="lb"><span>Exchange OHLCV (Binance)</span><span>Aggregator OHLCV (Yahoo)</span><span>Macro series (FRED)</span><span>News RSS feeds</span><span>Public sentiment proxies</span><span>On-chain (free public)</span><span>Rate-limit &amp; retry middleware</span><span>Raw landing zone (immutable)</span></div>
+</div>
+<div class="arrow">▼</div>
+<div class="layer">
+  <div class="lt">L0 · Storage &amp; Configuration</div>
+  <div class="lb"><span>Raw / interim / curated Parquet zones</span><span>DuckDB query layer</span><span>Model registry (artifacts + manifests)</span><span>Experiment registry (SQLite)</span><span>Config YAML + .env secrets</span><span>Git + DVC-style data versioning</span></div>
+</div>
+
+<div class="box">
+<h4>Why this decomposition and not the proposal's five prose layers</h4>
+<p>The proposal's §7.5 lists "Data Collection / Processing / Sentiment Analysis / Modelling / Visualization". That is a reasonable conceptual grouping, but as an engineering specification it omits the serving layer, has no storage layer, has no evaluation layer — and it omits the fact that the visualization layer needs an API rather than direct database access. The six-layer split above reflects how the code is actually owned, how it is actually deployed, and where the boundaries that prevent data leakage and result contamination must sit.</p>
+</div>
+
+<h3>Context diagram</h3>
+<pre>
+        EXTERNAL SOURCES                    THE SYSTEM                    CONSUMERS
+  ┌────────────────────────┐        ┌──────────────────────┐         ┌────────────────┐
+  │ Binance public API    │───────▶│                       │         │                │
+  │ Yahoo Finance         │───────▶│   L1 Ingestion       │         │  Supervisor /  │
+  │ FRED (macro series)   │───────▶│        │              │         │  Examiner      │
+  │ Crypto news RSS       │───────▶│        ▼              │         │                │
+  │ Public sentiment idx  │───────▶│   L2 Features +      │         │  Thesis        │
+  │ Free on-chain metrics │───────▶│      Sentiment       │         │  (Ch. 4–6)    │
+  └────────────────────────┘        │        │              │         │                │
+                                    │        ▼              │         │  Dashboard     │
+   ┌────────────────────────┐        │   L3 Modelling       │◀───────▶│  (L6)         │
+   │ Manual curation        │───────▶│        │              │         │                │
+   │ (glossary, regimes)    │        │        ▼              │         │  API clients   │
+   └────────────────────────┘        │   L4 Research &      │         │  (L5)         │
+                                    │      Evaluation       │         │                │
+                                    │        │              │         │  External      │
+                                    │        ▼              │         │  reviewers     │
+                                    │   L0 Storage &        │         │                │
+                                    │      Config          │         └────────────────┘
+                                    └──────────────────────┘
+</pre>
+<p class="caption">Figure 3.1 — System context diagram. Data flows left to right through the pipeline; the only path back into the system is a manual, version-controlled artefact (the crypto lexicon and regime definitions), never an automatic feedback loop from a live decision.</p>
+
+<h3>Data flow, Level-0</h3>
+<pre>
+  ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐   ┌──────────────┐
+  │  Price /     │   │    Macro     │   │    News      │   │   Sentiment  │   │  Curated     │
+  │  OHLCV       │   │    series    │   │    text      │   │   features   │   │  feature     │
+  └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘   └──────┬───────┘
+         │                  │                  │                  │                  │
+         ▼                  ▼                  ▼                  ▼                  ▼
+  ┌──────────────────────────────────────────────────────────────────────────────────────────┐
+  │  L2  ALIGNMENT ENGINE   — as_of-aware joins, trading-calendar reconciliation, embargo      │
+  ├──────────────────────────────────────────────────────────────────────────────────────────┤
+  │  L3  FEATURE BUILDER    — technical indicators · macro alignment · tier features ·         │
+  │                          cross-asset lag features · sentiment features · regime labels      │
+  ├──────────────────────────────────────────────────────────────────────────────────────────┤
+  │  L4  SEQUENCE BUILDER   — T-day windows per asset · label construction · splits with      │
+  │                          embargo · fold manifests                                          │
+  ├──────────────────────────────────────────────────────────────────────────────────────────┤
+  │  L5  MODELS + EVAL      — 8 models × 3 feature sets × 3 validation schemes × 3 tiers      │
+  │                          → experiment registry (metrics, params, seeds, artefacts)         │
+  └──────────────────────────────────────────────────────────────────────────────────────────┘
+         │                  │                  │                  │                  │
+         ▼                  ▼                  ▼                  ▼                  ▼
+   price.parquet    macro.parquet      news_daily.parquet   sentiment.parquet  features.parquet
+                                                            labels.parquet
+</pre>
+<p class="caption">Figure 3.2 — Level-0 data flow. Every arrow is a timestamped join performed by the alignment engine with an <code>as_of</code> guard; no join is a plain pandas merge on a date key.</p>
+
+<h2 id="p3-3">3.3 Repository layout</h2>
+
+<pre>
+crypto-sentiment-forecasting/
+├── README.md                     # quickstart, architecture summary, status badge
+├── Makefile                      # `make setup | data | features | train | evaluate | report | all`
+├── docker-compose.yml            # api + dashboard + scheduled pipeline
+├── pyproject.toml                # package metadata, tool config (ruff, pytest, mypy)
+├── requirements.lock             # pinned, hash-verified
+├── .env.example                  # documented keys, NO real values
+├── .pre-commit-config.yaml        # ruff, trailing-whitespace, large-file guard
+│
+├── config/
+│   ├── universe.yaml             # asset tiers, pairs, listing dates, exclusions
+│   ├── sources.yaml              # endpoint registry, rate limits, fallbacks
+│   ├── features.yaml             # indicator definitions, windows, lags
+│   ├── sentiment.yaml            # lexicon paths, weighting scheme, aggregation
+│   ├── models.yaml               # model ladder + hyperparameter search spaces
+│   └── evaluation.yaml           # splits, embargo, metrics, test settings
+│
+├── src/csf/
+│   ├── __init__.py
+│   ├── config.py                 # typed config loader + validation
+│   ├── constants.py              # trading calendars, tier definitions, enums
+│   ├── ingest/                   # L1
+│   │   ├── base.py               # HTTP client, retry, backoff, rate limiter
+│   │   ├── exchange.py           # Binance klines + ticker
+│   │   ├── yahoo.py              # aggregator OHLCV + macro proxies
+│   │   ├── fred.py               # macro series
+│   │   ├── news.py               # RSS ingestion + parser
+│   │   ├── sentiment_proxy.py    # free public sentiment proxies
+│   │   ├── onchain.py            # free on-chain metrics
+│   │   └── orchestrator.py       # daily run plan, resume, manifest
+│   ├── features/                 # L2
+│   │   ├── technical.py          # indicator library
+│   │   ├── macro.py              # macro alignment, surprise, lag handling
+│   │   ├── cross_asset.py        # lead-lag, contagion features
+│   │   ├── sentiment.py          # lexicon scoring, density weight, aggregation
+│   │   ├── regimes.py            # regime detection & labelling
+│   │   ├── alignment.py          # as_of join engine, trading calendar
+│   │   └── builder.py            # feature store writer
+│   ├── modelling/                # L3
+│   │   ├── baselines.py
+│   │   ├── tree_models.py
+│   │   ├── sequence_models.py
+│   │   ├── fusion.py             # attention fusion (HSIF-style reimplementation)
+│   │   ├── regime_router.py
+│   │   └── calibration.py
+│   ├── evaluation/               # L4
+│   │   ├── splits.py             # walk-forward, embargo, purging
+│   │   ├── metrics.py            # regression, classification, financial
+│   │   ├── statistical_tests.py  # DM, Granger, bootstrap, multiple testing
+│   │   ├── backtest.py           # cost-aware simulator
+│   │   ├── ablation.py
+│   │   └── runner.py             # experiment orchestration
+│   ├── serving/                  # L5
+│   │   ├── api.py                # FastAPI app
+│   │   ├── schemas.py            # Pydantic models
+│   │   └── registry.py           # model loading & version resolution
+│   ├── dashboard/                # L6
+│   │   ├── app.py
+│   │   └── pages/
+│   ├── reporting/                # figures, tables, thesis artefacts
+│   │   ├── figures.py
+│   │   └── tables.py
+│   └── utils/
+│       ├── io.py, logging.py, seeds.py, calendar.py, registry.py
+│
+├── data/
+│   ├── raw/                      # immutable landing zone (git-ignored, DVC-tracked)
+│   │   ├── {source}/{asset}/{date}.json
+│   ├── interim/
+│   └── curated/                  # parquet, partitioned by feature_set
+│
+├── models/                       # trained artefacts + model cards
+│   ├── registry/{model_id}/artifact.joblib, manifest.json, card.md
+├── experiments/                  # experiment registry output
+│   ├── registry.sqlite
+│   └── runs/{run_id}/
+├── notebooks/                    # exploration only, never results
+├── docs/                         # documentation (see Part VII)
+│   ├── adr/  data-cards/  model-cards/  thesis/  api/
+├── tests/
+│   ├── unit/  integration/  causality/  regression/
+├── scripts/                      # operational entry points
+│   ├── bootstrap.py  refresh_all.py  run_experiment.py  build_report.py
+└── Makefile
+</pre>
+<p class="caption">Figure 3.3 — Repository layout. The separation of <code>src/csf</code> (library), <code>notebooks</code> (exploration) and <code>scripts</code> (operations) is the mechanism that keeps results out of notebooks.</p>
+
+<h2 id="p3-4">3.4 Asset universe and tiering</h2>
+
+<p>The user requirement is to cover popular large-caps and high-risk/new listings. The tiering is not cosmetic — it <em>is</em> contribution C1, so the tiers must be defined by a rule applied uniformly and defensibly, not assigned by hand to produce a desired result.</p>
+
+<h3>Tier definition</h3>
+<table>
+<tr><th style="width:12%">Tier</th><th style="width:26%">Rule (applied at the asset's own listing date)</th><th style="width:22%">Purpose</th><th>Illustrative members</th></tr>
+<tr>
+  <td><strong>T1</strong><br>Large-cap</td>
+  <td>Market capitalisation in the top 20 <em>and</em> listed for ≥ 4 years <em>and</em> daily volume above a fixed threshold</td>
+  <td>Deep markets; sentiment should be absorbed efficiently; these are the <em>contagion sources</em></td>
+  <td>BTC, ETH, BNB, XRP, SOL, ADA, DOGE, LTC</td>
+</tr>
+<tr>
+  <td><strong>T2</strong><br>Mid-cap</td>
+  <td>Ranked 21–100 by market cap <em>and</em> listed ≥ 2 years</td>
+  <td>Intermediate sensitivity; provides the monotone gradient that H2 tests</td>
+  <td>LINK, AVAX, DOT, MATIC/POL, ATOM, UNI, XLM, ETC</td>
+</tr>
+<tr>
+  <td><strong>T3</strong><br>High-risk / new</td>
+  <td>Listed &lt; 2 years, <em>or</em> top-100 by market cap but flagged as high-volatility with a documented drawdown history</td>
+  <td>Thin markets where sentiment should have the largest, noisiest effect</td>
+  <td>New 2025–2026 listings, recently-upgraded tokens, small-cap newcomers</td>
+</tr>
+</table>
+<p class="caption">Table 3.2 — Tier definitions. Market-cap ranks and listing dates are captured at run time and versioned, so the tier assignment of any asset on any date is reproducible and auditable.</p>
+
+<div class="box">
+<h4>Critical implementation rule for T3</h4>
+<p>A newly-listed asset has a truncated history. If you evaluate a T3 asset on a fixed 60-day lookback from its listing date, every sample from that asset is warm-up and it contributes nothing. Two consequences follow, and both must be handled in code:</p>
+<p><strong>(a)</strong> Model training must not require a fixed history length — use a <em>variable-length</em> sequence model with masking, or train per-tier with an asset-appropriate lookback. <strong>(b)</strong> Assets must enter the evaluation panel only once they have accumulated at least <code>min_history_days</code> of post-listing data (default 90), and the evaluation window per asset must be recorded so that tier comparisons are not confounded with different sample periods.</p>
+<p style="margin-bottom:0">Without this, T3 results will be systematically weaker for reasons that have nothing to do with sentiment, and H2 will be testing your data pipeline rather than your hypothesis. This is the most likely way the project's central contribution gets invalidated, and it is invisible unless handled deliberately.</p>
+</div>
+
+<h3>Contagion graph</h3>
+<pre>
+                          TIER 1  (deep, established)
+        ┌────────────┬────────────┬────────────┬────────────┐
+        │    BTC     │    ETH     │    BNB     │    SOL     │   ← contagion SOURCES
+        └─────┬──────┴─────┬──────┴─────┬──────┴─────┬──────┘
+              │            │            │            │
+     ═════════╪════════════╪════════════╪════════════╪═════════  lagged sentiment
+              │            │            │            │              (lag 0..L days)
+              ▼            ▼            ▼            ▼
+        ┌───────────────────────────────────────────────────┐
+        │  TIER 2  (mid-cap)                                │  ← contagion SINKS
+        │  LINK   AVAX   DOT   ATOM   UNI   XLM   ETC      │     (hypothesis: they receive)
+        └───────────────────────────────────────────────────┘
+              │            │            │            │
+     ═════════╪════════════╪════════════╪════════════╪═════════
+              │            │            │            │
+              ▼            ▼            ▼            ▼
+        ┌───────────────────────────────────────────────────┐
+        │  TIER 3  (high-risk / new listings)               │  ← strongest expected
+        │  new-2025/2026 listings, high-beta newcomers      │     sensitivity, weakest
+        └───────────────────────────────────────────────────┘     depth
+</pre>
+<p class="caption">Figure 3.4 — The assumed contagion topology. This is a <em>hypothesis to be tested</em>, not an assumption to be built in. The lead–lag structure must be measured empirically (§4.3) rather than hard-coded; the diagram states the testable conjecture that tier-1 sentiment transmits downward and that transmission attenuates with tier distance.</p>
+
+<h2 id="p3-5">3.5 Data sources — free tier only</h2>
+
+<table class="tight">
+<tr><th style="width:14%">Layer</th><th style="width:18%">Source</th><th style="width:24%">Data</th><th style="width:22%">Access</th><th>Notes &amp; fallback</th></tr>
+<tr>
+  <td rowspan="3">Price</td>
+  <td>Binance public API</td>
+  <td>OHLCV klines, 1d, all USDT pairs</td>
+  <td>Free, no key, ~1200 req/min weight</td>
+  <td><strong>Primary.</strong> Supports any pair. <code>/api/v3/klines</code> supports a 1000-row page. Watch for delisted pairs.</td>
+</tr>
+<tr>
+  <td>Yahoo Finance</td>
+  <td>OHLCV for coin-margined and aggregator-only assets</td>
+  <td>Free, no key, unofficial <code>yfinance</code></td>
+  <td>Fallback and cross-check. Use to validate Binance data; document any divergence.</td>
+</tr>
+<tr>
+  <td>CoinGecko</td>
+  <td>Market cap, rank, volume, circulating supply</td>
+  <td>Free tier, ~10–30 calls/min</td>
+  <td><strong>Essential</strong> for tier assignment. Snapshot daily and version it.</td>
+</tr>
+<tr>
+  <td rowspan="2">Macro</td>
+  <td>FRED</td>
+  <td>Fed funds rate, CPI, unemployment, real yield, broad USD, gold, VIX, DXY, S&amp;P 500</td>
+  <td>Free with API key (no cost)</td>
+  <td><strong>Primary macro source.</strong> Free key from fred.stlouisfed.org. Releases are monthly/quarterly — see the surprise handling in §4.3.</td>
+</tr>
+<tr>
+  <td>Yahoo Finance</td>
+  <td>VIX, DXY, S&amp;P, gold, NASDAQ, USD index</td>
+  <td>Free</td>
+  <td>Fallback for FRED series and for daily granularity.</td>
+</tr>
+<tr>
+  <td rowspan="2">News</td>
+  <td>CoinDesk RSS</td>
+  <td>Full-text crypto articles</td>
+  <td>Free, public RSS</td>
+  <td>Primary news source. Feed URL: <code>https://www.coindesk.com/arc/outboundfeeds/rss/</code></td>
+</tr>
+<tr>
+  <td>Decrypt / Bitcoin Magazine / The Block RSS</td>
+  <td>Full-text crypto articles</td>
+  <td>Free, public RSS</td>
+  <td>Secondary sources for source-diversity and bias checks (§8.1). Multiple feeds also let you test cross-source robustness.</td>
+</tr>
+<tr>
+  <td rowspan="2">Sentiment<br>proxies</td>
+  <td>Google Trends</td>
+  <td>Search interest for coin names</td>
+  <td>Free via <code>pytrends</code>, unofficial, rate-limited and flaky</td>
+  <td>Use as an <strong>attention</strong> proxy and as a baseline, with strict failure handling. Never let a failure abort the pipeline.</td>
+</tr>
+<tr>
+  <td>Public on-chain / social counts</td>
+  <td>Active addresses, hashrate, exchange netflow, social post volume</td>
+  <td>Varies; several free public endpoints</td>
+  <td>Adds real "soft" market data without a paid API. Implement behind the same interface as the other sources with graceful degradation.</td>
+</tr>
+<tr>
+  <td>On-chain</td>
+  <td>blockchain.info, mempool, public explorers</td>
+  <td>BTC on-chain metrics</td>
+  <td>Free public endpoints</td>
+  <td>BTC only. Optional but strengthens the multi-modality claim (addresses the scope note in §2.5).</td>
+</tr>
+</table>
+<p class="caption">Table 3.3 — Free-tier source registry. Every entry has a documented fallback and every collector degrades gracefully.</p>
+
+<div class="warn">
+<p class="lbl">On the sentiment source problem — and how it changes the research design</p>
+<p>The original proposal assumed X/Twitter and Reddit sentiment. Under the free-tier regime that is not implementable within the schedule. The substitution is not simply "use RSS instead" — it changes what is being measured, and the thesis must reflect that honestly.</p>
+<p><strong>What changes:</strong> sentiment becomes <em>news-sourced</em> rather than <em>social-sourced</em>. The pipeline therefore measures <strong>news sentiment</strong>, which is the variable Kreuzer et al. (2026) study — and is arguably <em>better</em> for this project, because Kreuzer show that news sentiment is the rationally-priced channel in institutional futures markets, while social sentiment is the "irrational" component. Since this project targets a tier-stratified, economically-validated study, news sentiment is the more appropriate primary variable.</p>
+<p><strong>What this means for the thesis text:</strong> replace every occurrence of "social media sentiment" with "news sentiment". Where the free sentiment proxies are used (Google Trends as attention, on-chain/social counts as activity), label them precisely as <em>attention</em> and <em>activity</em> measures, not as sentiment. A reviewer will accept a carefully delimited construct; they will not accept a claim that social sentiment was used when it was not.</p>
+<p><strong>What this means for the research value:</strong> it actually strengthens the cross-asset framing. Kreuzer et al. show BTC news drives ETH futures — a spillover in the <em>news</em> channel. Testing whether that spillover extends down the tier structure in a news-only setting is a clean, well-delimited question, and it avoids the bot-detection and manipulation problems that a social-media sentiment channel would have required the ethics chapter to address.</p>
+</div>
+
+<h2 id="p3-6">3.6 Canonical data contracts</h2>
+
+<p>Every dataset has a fixed schema. Schemas are enforced at write time by a validator, so a malformed frame fails at the boundary rather than silently poisoning a downstream metric.</p>
+
+<h3>D1 — Prices (long format, one row per asset per day)</h3>
+<pre>
+asset        str    "BTC/USDT"          # canonical symbol, uppercase, "/" separator
+ts           date   2024-03-15          # exchange date (UTC), NOT timestamp of fetch
+open         f64    62340.10
+high         f64    64120.00
+low         f64    61100.50
+close        f64    63780.22
+volume       f64    184529301.44         # quote volume (USD-equivalent)
+quote_vol    f64    184529301.44
+trades       i64    1834722
+tier         str    "T1"                 # assigned by market cap + listing age at ts
+source       str    "binance"
+ingested_at  ts     2024-03-16T00:05:12Z # when we fetched it
+</pre>
+
+<h3>D2 — Sentiment (one row per asset per day)</h3>
+<pre>
+asset            str    "BTC/USDT"
+ts               date   2024-03-15
+sent_raw         f64    -0.0214            # dictionary-based, [-1, 1]
+sent_cd          f64    -0.0147            # crypto-density-weighted, [-1, 1]
+sent_pos         f64     0.11              # fraction of positive articles
+sent_neu         f64     0.78
+sent_neg         f64     0.11
+crypto_density   f64     0.31              # crypto-specific terms / total terms
+n_articles       i32     14                # articles that day (0 → carry-forward rules)
+n_sources        i32      3                # distinct feeds contributing
+sent_ewm_3       f64    -0.0188            # EWMA of sent_cd, 3-day half-life
+sent_z_60        f64     0.42              # z-score over trailing 60d
+sent_mom_1       f64     0.0031            # 1-day change in sent_cd
+source           str    "coindesk+rss"
+</pre>
+
+<h3>D3 — Features (one row per asset per day, wide)</h3>
+<pre>
+asset, ts, <technical_*>, <macro_*>, <sentiment_*>, <cross_asset_*>, <regime_*>
+</pre>
+<p class="small">Feature names are namespaced by origin (<code>tech_</code>, <code>macro_</code>, <code>sent_</code>, <code>xasset_</code>, <code>regime_</code>) so that feature-set ablation (§6.2) is a prefix filter rather than a hand-maintained list, and so that a reader can trace any feature back to its source and definition in the data dictionary (Appendix C).</p>
+
+<h3>D4 — Labels (one row per asset per day)</h3>
+<pre>
+asset          str
+ts             date
+y_ret          f64    # next-day log return
+y_dir          i8     # +1 if next-day return > 0, else 0
+y_ret_5d       f64    # 5-day forward log return (for horizon robustness)
+horizon        i32    # 1 or 5
+</pre>
+
+<div class="box">
+<h4>Critical: label construction and the embargo</h4>
+<p><code>y_ret</code> at time <em>t</em> is defined as <code>log(close[t+1] / close[t])</code>. This means the label at the <em>last row</em> of any split cannot be computed — it depends on the row after the boundary. Therefore:</p>
+<p style="margin-bottom:0">Every split boundary must be followed by an <strong>embargo of at least <code>horizon + lookback</code> rows</strong>, and the final rows of the dataset must have their labels dropped entirely. With a 60-day lookback and a 1-day horizon this is a 61-row embargo. Skipping this is the single most common cause of leakage in published crypto papers, and it silently inflates every reported metric. Implement it once, in <code>src/csf/evaluation/splits.py</code>, and never bypass it.</p>
+</div>
+
+<h2 id="p3-7">3.7 Configuration and secrets</h2>
+
+<p>Configuration is declarative YAML under <code>config/</code>, validated at startup by a typed loader. Secrets are environment variables, never in YAML, never in the repository.</p>
+
+<pre>
+# .env.example  — copy to .env, fill locally, .env is git-ignored
+FRED_API_KEY=your_key_here
+# Optional: only if you later obtain a paid key. The pipeline runs without it.
+NEWS_API_KEY=
+COINGECKO_API_KEY=
+</pre>
+
+<pre>
+# config/universe.yaml
+tiers:
+  T1: {min_rank: 1,  max_rank: 20,  min_age_days: 1460, min_quote_vol: 50_000_000}
+  T2: {min_rank: 21, max_rank: 100, min_age_days: 730}
+  T3: {max_age_days: 730}          # listed &lt; 2y OR flagged high-volatility
+assets:
+  include:
+    - {symbol: BTC/USDT,  role: primary}
+    - {symbol: ETH/USDT,  role: primary}
+    - {symbol: BNB/USDT,  role: primary}
+    - {symbol: SOL/USDT,  role: primary}
+    - {symbol: AVAX/USDT, role: primary}
+    - {symbol: XRP/USDT,  role: primary}
+  exclude:
+    - {symbol: USDT/USDT, reason: stablecoin}
+    - {symbol: USDC/USDT, reason: stablecoin}
+    - {symbol: XMR/USDT,  reason: delisted_may_2024}
+min_history_days: 90              # warm-up requirement before an asset enters the panel
+</pre>
+
+<h3>Rules</h3>
+<ul>
+  <li><strong>Never commit a key.</strong> <code>.env</code> is in <code>.gitignore</code> from day one. The pre-commit hook rejects any file containing a string matching <code>(api_key|secret|token)\s*[:=]\s*['"][A-Za-z0-9]{16,}</code>.</li>
+  <li><strong>Every config change is a commit.</strong> Config is versioned alongside code so that a result can always be traced to the exact configuration that produced it. The experiment manifest records the config hash.</li>
+  <li><strong>No hard-coded paths.</strong> All paths resolve from a single <code>CSF_DATA_ROOT</code> environment variable, defaulting to <code>./data</code>.</li>
+  <li><strong>Config validation fails fast.</strong> Missing asset, unknown tier, negative embargo, or a lookback longer than the shortest asset's history must raise at startup, not midway through a 40-minute training run.</li>
+</ul>
+
+<h2 id="p3-8">3.8 Runtime, deployment and observability</h2>
+
+<h3>Execution model</h3>
+<table>
+<tr><th style="width:20%">Job</th><th style="width:16%">Schedule</th><th style="width:28%">What it does</th><th>Runtime expectation</th></tr>
+<tr><td><code>refresh_all</code></td><td>Daily, 02:00 UTC</td><td>Ingest all sources → features → sentiment → curated store</td><td>5–20 min for the full universe</td></tr>
+<tr><td><code>train</code></td><td>Weekly, Sat</td><td>Walk-forward retraining on the latest window, writes to model registry</td><td>20–60 min (CPU) / 10–25 min (GPU)</td></tr>
+<tr><td><code>evaluate</code></td><td>Weekly, Sun</td><td>Full evaluation matrix → experiment registry → report artefacts</td><td>1–3 h</td></tr>
+<tr><td><code>refresh_live</code></td><td>Hourly</td><td>News + sentiment refresh only, no retraining</td><td>&lt; 2 min</td></tr>
+</table>
+
+<h3>Deployment</h3>
+<pre>
+# docker-compose.yml (abridged)
+services:
+  api:
+    build: .
+    command: uvicorn csf.serving.api:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data:ro", "./models:/app/models:ro"]
+    healthcheck: {test: ["CMD","curl","-f","http://localhost:8000/healthz"], interval: 30s}
+
+  dashboard:
+    build: .
+    command: streamlit run csf/dashboard/app.py --server.port 8501
+    ports: ["8501:8501"]
+    volumes: ["./data:/app/data:ro", "./models:/app/models:ro"]
+
+  pipeline:
+    build: .
+    command: python scripts/refresh_all.py
+    restart: "no"        # driven by cron on the host or a scheduler service
+</pre>
+
+<div class="box">
+<h4>Deployment reality check for a 3-student, 64-day project</h4>
+<p>The deliverable is <strong>source plus a reproducible run plus a local or single-VM deployment</strong> — not a public cloud service with SLAs. Any of these satisfies the requirement and is achievable: (a) a documented <code>make all</code> run on a laptop; (b) a Docker Compose stack on a free-tier VM (Oracle Cloud Always Free, Google Cloud <code>e2-micro</code> free tier); (c) a public demo via the <code>api</code> service on a free hosting platform if time permits. Choose one, implement it properly, and document it. Do not attempt a production deployment — the time cost would come directly out of the research, which is what is actually being examined.</p>
+</div>
+
+<h3>Observability and reproducibility</h3>
+<ul>
+  <li><strong>Structured logging.</strong> JSON logs with <code>run_id</code>, <code>asset</code>, <code>stage</code>, <code>duration_ms</code>. One log line per stage per asset, aggregated at the end of each run.</li>
+  <li><strong>Run manifests.</strong> Every pipeline run writes <code>manifest.json</code>: run ID, git commit SHA, config hash, source response hashes, row counts, start/end times, environment lock hash.</li>
+  <li><strong>Failure isolation.</strong> One failing source or one failing asset must not abort the run. Each collector returns a status per source; failures are recorded, the run continues, and the dashboard shows a data-freshness panel making gaps visible. Silent partial data is the failure mode this prevents.</li>
+  <li><strong>Freshness SLA.</strong> The dashboard displays, per source, the last successful fetch and the expected next fetch. A stale source older than 36 hours is flagged. This is what stops the thesis from reporting results built on a data feed that quietly died in week three.</li>
+</ul>

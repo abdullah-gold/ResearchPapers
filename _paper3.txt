@@ -1,0 +1,2067 @@
+Review of Derivatives Research  (2026) 29:3
+
+https://doi.org/10.1007/s11147-025-09223-6
+
+REVIEW
+
+Beyond pure hype: news sentiment and its role in the BTC
+and ETH futures market
+
+Christian Kreuzer1 · Christian Sparrer1 · Gregor Dorfleitner1
+
+Received: 10 September 2025 / Accepted: 28 October 2025
+© The Author(s) 2025
+
+Abstract
+Unlike traditional assets, cryptocurrencies lack fundamental information such as
+dividends, earnings, or cash flows, requiring market participants to rely on alter-
+native sources of information for price discovery and trading decisions. In this
+study, we analyze the relationship between news sentiment and Bitcoin (BTC) and
+Ether (ETH) futures returns, as well as net trading positions. We use a dataset of
+over 9100 BTC and 5400 ETH news articles. The findings reveal that news senti-
+ment is significantly associated with futures price movements and market position-
+ing by professional investors. We extend the traditional dictionary-based approach
+of Loughran and McDonald (2011) by enabling a more precise identification of
+crypto-relevant content. Our findings highlight the role of news sentiment as an
+information channel in cryptocurrency derivatives markets and uncover substantial
+differences between the BTC and ETH futures markets.
+
+Keywords Cryptocurrency futures · Bitcoin (BTC) · Ether (ETH) · News
+sentiment analysis · Financial news media
+
+     Christian Kreuzer
+     christian.kreuzer@ur.de
+
+     Christian Sparrer
+     christian.sparrer@ur.de
+
+     Gregor Dorfleitner
+     gregor.dorfleitner@ur.de
+
+1 Department of Finance, University of Regensburg, Regensburg, Germany
+
+                                                                        13
+3  Page 2 of 36  C. Kreuzer et al.
+
+1Introduction
+
+In recent years, cryptocurrencies have gained tremendous attention from academics,
+retail and institutional practitioners, and politicians alike1. For example, during the
+2024 U.S. presidential campaign, Donald Trump repeatedly expressed his support
+for cryptocurrencies and the underlying blockchain technology. Following his elec-
+tion victory, the price of Bitcoin increased by approximately 11.5% in a single day.
+This anecdote illustrates the potential effect of recent news and positive sentiment
+and highlights the importance of answering the question to what extent the senti-
+ment of news shapes the price mechanism of cryptocurrencies. While a growing body
+of literature investigates sentiment in cryptocurrency spot markets (see e.g., Liu &
+Tsyvinski 2021, Aysan et al. 2024, Anamika & Subramaniam 2023, Akyildirim et al.
+2024), these studies neglect the pricing dynamics in the more institutionally relevant
+futures markets.
+
+   Since the introduction of the first cryptocurrency-based futures contract in Decem-
+ber 2017, professional market participants have gained access to the broader cryp-
+tocurrency market and played an essential role in its maturation (Baur & Smales,
+2022). Despite the importance of futures markets, there has been no systematic inves-
+tigation of how the cryptocurrency futures market evaluates sentiment extracted from
+cryptocurrency-related news. Our study fills this gap by investigating how Bitcoin
+(BTC) and Ether (ETH) futures prices respond to shifts in sentiment and how institu-
+tional investors adjust their market positions.
+
+   Existing studies based on sentiment analysis in the context of cryptocurrencies
+exhibit several limitations, which our paper addresses through multiple key contribu-
+tions. First, we focus on futures markets rather than spot markets, which are utilized
+by earlier studies on sentiment and investor attention (see e.g., Anamika & Subra-
+maniam 2022, Aysan et al. 2024, Karalevicius et al. 2018). With the fundamental
+concept of a decentralized ecosystem without centralized regulation, the spot prices
+of cryptocurrencies vary between multiple decentralized exchanges, reflecting incon-
+sistent assumptions and thus arbitrage opportunities (Makarov & Schoar, 2020). Spot
+markets impose constraints on betting against prices, such as limited lendable supply,
+borrowing costs, short-sale frictions, (Augustin et al., 2023). In contrast, cryptocur-
+rency futures markets offer uniform pricing, high liquidity, and the ability to hedge
+spot price risks (see e.g. Matic et al. 2023, Sebastião & Godinho 2020).
+
+   Given the natural predominance of negative sentiment within news articles, react-
+ing to sentiment changes requires frictionless shorting. As futures allow cost-effec-
+tive short positions, this makes cryptocurrency futures markets an interesting setting
+for sentiment analysis that must capture both positive and negative signals. More-
+over, trading activity is concentrated in derivatives, with aggregate cryptocurrency
+futures volumes consistently exceeding spot volumes (Aleti & Mizrach, 2021). At
+institutional scales, the total transaction cost of futures often undercuts spot because
+exchange and clearing fees are largely fixed on a per-contract basis and fee tiers
+decline with volume, which further strengthens the case for futures markets. Finally,
+
+1Cryptocurrencies built on the blockchain represent decentralized assets where transactions can be veri-
+ fied even in the absence of a centralized custodian (Makarov & Schoar, 2020).
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 3 of 36 3
+
+our analysis relies on an efficient transition of information and sentiment into prices.
+Initially, shortly after the introduction of Bitcoin futures in December 2017 price dis-
+covery occurred in the spot market (Corbet et al., 2018). However, the futures market
+has matured (Chen & Yang, 2024). Consistent with evidence for equity indices and
+commodities (Tse, 1999; Figuerola-Ferretti & Gonzalo, 2010), more recent studies
+(see e.g. Robertson & Zhang 2025, Aleti & Mizrach 2021, Wu et al. 2021, Kapar
+& Olmo 2019) provide empirical evidence that the futures market now dominates
+price discovery in cryptocurrencies. Because changes in sentiment are priced first
+in markets where price discovery occurs, our focus on futures market sharpens the
+sentiment-return relation and limits microstructure noise from lagging venues.
+
+   Second, we explore how professional investors in futures markets react to changes
+in news sentiment. Earlier studies focus on cryptocurrency spot markets, which show
+signs of a varying degree of market efficiency (Urquhart, 2016; Chu et al., 2019) and
+are largely driven by short-term investors, noise traders, and speculators (Aysan et al.,
+2024). Investment decisions of (unexperienced) retail traders are influenced by phe-
+nomena such as herding behavior (Celeste et al., 2020; Gama et al., 2019; Ballis &
+Drakos, 2020), momentum effects (Liu & Tsyvinski, 2021), or overreaction to events
+and irrational sentiment on social media (Karalevicius et al., 2018; Kraaijeveld & De
+Smedt, 2020; Shen et al., 2019). Unlike spot markets driven by retail traders, futures
+markets attract more sophisticated participants. Following Aysan et al. (2024), we
+argue that due to the experience and skill of professional investors, irrational senti-
+ment-induced volatility should be less important in futures markets. Consistent with
+our focus on institutional investors, our sentiment measure is derived from reputable
+sources such as WSJ, FT, Reuters News, or Coindesk. These sources provide more
+substantive coverage and rational reporting about relevant developments, such as
+Bitcoin halving or regulatory standards, thus mitigating the risk of distortion from
+exaggerated or bot-generated content common in social media.
+
+   Third, our study highlights the role of news sentiment, defined as text sentiment
+of relevant articles in reputable sources, as a key information channel in the pricing
+of cryptocurrency futures. Unlike retail investors, who often lack the knowledge and
+resources for a detailed valuation (Aysan et al., 2024), institutional investors rely on
+sophisticated valuation models to support their trading decisions. However, applying
+such models to cryptocurrencies is inherently challenging due to the absence of fun-
+damental properties such as dividends, cash flows, or earnings (Aysan et al., 2024).
+Moreover, there is no uniform opinion on whether the intrinsic value of cryptocurren-
+cies is different from zero (see e.g., Cheah & Fry 2015, Treiblmaier 2022, Van Vliet
+2018). In light of this challenge, Treiblmaier (2022) suggests refraining from the
+term intrinsic value and turning towards the `extrinsic value', which shifts the focus
+to observable factors that reflect a cryptocurrency's utility and ecosystem character-
+istics. Relevant factors include network size and scarcity (Van Vliet, 2018), security
+(Pagnotta, 2021), utility (García-Monleón et al., 2021), and production costs related
+to mining expenses (Treiblmaier, 2022)2. Reputable news sources provide essential
+
+2Note that the broad concept of utility might also intersect with the other properties and that the property
+ of scarcity only applies to BTC.
+
+                                                           13
+3  Page 4 of 36  C. Kreuzer et al.
+
+information about these properties, and news sentiment allows an evaluation of this
+information accordingly.
+
+   Fourth, our paper contributes methodologically by improving sentiment measure-
+ment in the context of crypto-related news3. In contrast to existing studies such as
+Anamika and Subramaniam (2023) and Aysan et al. (2024), which rely on ex-post
+sentiment measures from external data providers, our approach constructs sen-
+timent scores internally using publicly available news data and can be applied in
+real time. Validity concerns can be reduced by avoiding reliance on proprietary and
+often opaque scores from external data providers that could be reverse-engineered to
+fit financial outcomes. Furthermore, while Anamika and Subramaniam (2022) rely
+on news headlines, we measure sentiment based on the entire body of the article,
+allowing for a deeper and holistic analysis. Finally, we augment the Loughran and
+McDonald (2011) dictionary-based sentiment measure with GenAI, addressing the
+concern that a dictionary approach captures only one dimension of sentiment and
+neglects the frequency of the appearance of certain context-specific expressions (see
+e.g., Calomiris & Mamaysky 2019). We use GenAI to derive a crypto-specific dic-
+tionary from a wide range of context-specific glossaries, technical sources, such as
+Nakamoto (2008), and crypto-related academic publications. The resulting diction-
+ary comprises nearly 150 distinct terms4, which we use to construct a crypto density
+weight (CDW). This measure enables us to down-weight sentiment derived from
+non-crypto-related information, thereby providing a more targeted assessment of
+crypto-specific sentiment.
+
+   Our final dataset consists of more than 9100 BTC-related and 5400 ETH-related
+news items, which are aggregated daily. We find a significant relation between
+news sentiment and futures returns if we account for the CDW within the sentiment
+approach, but not in the case of using the Loughran and McDonald (2011) dictionary-
+based sentiment. Splitting sentiment into positive and negative values provides addi-
+tional insights. For BTC, negative news sentiment is associated with lower futures
+returns, whereas for ETH, positive news sentiment is associated with higher futures
+returns.
+
+   In addition, our analysis reveals that futures net trading positions are related to
+sentiment. Hedgers (speculators) increase their long (short) positions during periods
+of strong positive sentiment, suggesting active portfolio adjustments by professional
+investors. Interestingly, also ETH futures returns and net trading positions are driven
+by BTC news rather than ETH news sentiment. Our results hold for different market
+phases.
+
+   This paper proceeds as follows. Section 2 derives our theoretical reasoning. In sect.
+3, we describe our data and report descriptive statistics. Sections 4 present empirical
+results for BTC and ETH futures, while sect. 5 implements further robustness tests.
+Finally, sect. 6 concludes the study.
+
+3Of course, it is not news texts and their sentiment, but always market actors that drive prices. However,
+ sentiment analysis enables us to extract positive or negative values that certain news may have for the
+ market.
+4A list of these words, along with a figure illustrating the frequency of the 15 most common dictionary
+ terms in BTC articles, is provided in the Appendix Table 7.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 5 of 36 3
+
+2 Theoretical development
+
+2.1 Literature review
+
+Value drivers of cryptocurrencies
+   At the outset of any analysis of value-driving news, the question of what deter-
+
+mines the value of cryptocurrencies needs to be addressed. As stated by Treiblmaier
+(2022), the notion of intrinsic value is not particularly useful for the analysis of the
+value of cryptocurrencies. Some even stick to the opinion that the intrinsic value of
+cryptocurrencies essentially is zero (Cheah & Fry, 2015). Therefore, as suggested by
+Treiblmaier (2022), we rather focus on the concept of `extrinsic value' of cryptocur-
+rencies, which appears to be more easily determinable.
+
+   We consider five attributes, that can be used by market participants to determine
+the value of a cryptocurrency. These attributes are: network value and scarcity (see
+Van Vliet 2018 for both), security (Pagnotta, 2021), utility (García-Monleón et al.,
+2021) and cost of production (Treiblmaier, 2022). Note that these five aspects are not
+necessarily independent of each other, as for instance security issues may negatively
+influence the utility. Additionally, the supply-side cost of production argumentation,
+which only can deliver a minimum value, is entirely different to the other four dimen-
+sions, which are demand-side oriented.
+
+   The objective of this study lies in news texts. Thus we consider aspects that may
+be present in news and that have the potential to exert a qualitative influence on the
+value of cryptocurrencies. For instance, the emergence of a novel regulatory frame-
+work that enhances safety standards could be a positive influence. To this end, we
+discuss to what extent the five mentioned attributes may play different roles in the
+value determination of BTC and ETH.
+
+Scarcity: Clearly, part of the value of Bitcoin is based on the fixed supply cap of
+21 million full coins (implemented through predictable halving cycles) (Pagnotta &
+Buraschi, 2018). In contrast, Ether is not generally built on the concept of scarcity,
+but post-EIP-15595, its so-called burn mechanism implies some scarcity effects. In
+summary, the impact of scarcity is more pronounced in BTC than in ETH.
+
+Network value: According to Metcalfe's Law the value of a network is proportional
+to squared number of its users (Van Vliet, 2018). Thus, the value of BTC may be high
+simply because of the fact that it is the absolutely leading cryptocurrency (Zhang,
+2023). However, also ETH has some advantageous properties, as Ethereum token
+holders benefit from both Ethereum's growth and the growth of any application built
+on the platform (Celeste et al., 2020). Summarizing, we can state that the network
+value is a core component for both Bitcoin and Ether.
+
+5The term post-EIP-1559 refers to the period subsequent to August 5, 2021, which marked the imple-
+ mentation of Ethereum Improvement Proposal (EIP) 1559. This implementation introduced significant
+ economic improvements to the Ethereum network (Li et al., 2025).
+
+                                                           13
+3  Page 6 of 36  C. Kreuzer et al.
+
+Security: According to Pagnotta and Buraschi (2018), Bitcoin with its proof-of-work
+(PoW) mechanism requires the control of 51% of the total mining hash power to
+manipulate transactions. As such a control would be extremely expensive, the BTC
+network is considered very reliable. Ethereum's proof-of-stake (PoS) security model
+is based on economic finality, validator honesty enforcement (through slashing), and
+financial risk-return mechanics, differentiating it from PoW designs, but making
+it also very secure (Chen & Vinogradov, 2021). One can summarize that both the
+ETH and the BTC network appear to be highly secure (as of now), but use different
+mechanisms.
+
+Utility: The utility of Bitcoin as a medium of exchange is weak and the value stor-
+age use case is not classical utility (Zhang, 2023). Thus the valuation-impact of util-
+ity appears to be rather low for Bitcoin (Pagnotta & Buraschi, 2018). Compared to
+Bitcoin, which is a standalone application operating on its foundational blockchain,
+Ethereum enables the execution of smart contracts on its blockchain, and thereby
+facilitates the development of decentralized applications. Ethereum token holders
+benefit not only from the expansion of the Ethereum network but also from the suc-
+cess of any application developed on the platform, which may be seen as an advantage
+to Bitcoin (Celeste et al., 2020). The valuation of Ether is fundamentally connected
+with the utility that is derived from these smart contracts and corresponding applica-
+tions (such as dApps, DeFi, staking, NFTs) (Cong et al., 2020).
+
+Cost of production: Because of Bitcoin's energy intensive mining process (Pagnotta
+& Buraschi, 2018) due to the PoW consensus mechanism, which requires signifi-
+cant computational power and energy and which is not anymore in work for ETH
+(Abraham & El-Chaarani, 2022), it is relatively obvious that in Bitcoin the cost-of-
+production (energy, hardware etc.) aspect is much stronger than in ETH.
+
+Given the distinct characteristics of BTC and ETH, it is reasonable to anticipate pos-
+sibly divergent reactions of the respective prices to specific news events. Conversely,
+certain developments may impact both cryptocurrencies in a comparable manner.
+
+Futures on cryptocurrencies
+
+The importance of BTC and ETH futures markets has grown enormously since their
+introduction in 2017 for BTC (Alexander & Heck, 2020) and in 2021 for ETH (Krist-
+janpoller et al., 2024). According to Baur and Smales (2022), cryptocurrency futures
+add two features, namely allowing institutional investors to trade a regulated crypto-
+currency product and improving market efficiency by enabling shorting of BTC and
+ETH.
+
+   While cryptocurrencies are a very special underlying asset that is traded on many
+exchanges around the world simultaneously, the general relationship between the
+spot market price and the futures price via the cost-of-carry model is still valid in
+these markets. Shi et al. (2024) show that while futures-price deviations (basis risk)
+often appear, especially during volatility spikes, arbitrage trading corrects these inef-
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 7 of 36 3
+
+ficiencies. Kristjanpoller et al. (2024) studies the spot and futures market interaction
+for ETH, for which the arbitrage also appears to function.
+
+   Earlier works on the price discovery of BTC futures vs. spot markets such as
+Entrop et al. (2020) documents unclear or varying relationships. However, after
+some years, it appears indisputable that the BTC futures market generally has a lead
+over the spot markets, in the sense that price discovery takes place in the futures
+markets (Frino et al., 2025; Chen & Yang, 2024; Akyildirim et al., 2020). Regard-
+ing ETH, there appears to be no study that clearly proves the price discovery with
+regard to CME futures6, however, Augustin et al. (2023) reveal that the introduction
+of the ETH future on the CME improved the price-synchronicity of ETH-USD pairs,
+which indicates that this future also contributes to a better pricing. In addition to
+research focusing on futures markets and price discovery, related work has examined
+risk management in cryptocurrency derivatives. Matic et al. (2023) emphasize that
+effective risk management in more volatile market regimes requires richer models
+and multi-dimensional hedging. This complements the literature on cryptocurrency
+futures by highlighting the broader role of derivatives not only in price discovery but
+also in mitigating extreme risks.
+
+   Altogether there are clear indications that cryptocurrency futures markets are
+mature markets that are functionally related with the spot markets and they are the
+playing field of the professionals.
+
+Sentiment analysis
+
+Sentiment in financial markets, especially stock markets, has long been a subject of
+research. The foundational work of Baker and Wurgler (2006), upon which numer-
+ous subsequent studies have been built, provides an overview of several proxies for
+investor sentiment, including: investor surveys, retail investor trades, mutual fund
+flows, trading volume, dividend premium, IPO returns, option implied volatility,
+IPO volume or insider trading. Baker and Wurgler (2006) also develop an index that
+aggregates several of these dimensions.
+
+   An additional dimension to sentiment analysis is added by inferring sentiment
+from text such as social media posts (Kim & Kim, 2014) or news (Smales, 2014).
+These approaches aim to quantify the sentiment of market participants and analyze
+their potential influence on market developments. There is evidence that sentiment
+tends to correlate negatively with returns in the long term (Baker & Wurgler, 2006;
+Schmeling, 2009) and positively with contemporaneous returns (Brown & Cliff,
+2004). However, the predictive power of sentiment is inconclusive and turns out to
+be rather weak in many empirical studies (e.g., Brown & Cliff 2004).
+
+   Texts are a particularly interesting source of sentiment. Social media texts tend to
+represent irrational sentiment (Li et al., 2023), but news texts in reputable media out-
+lets also express sentiment. Rather than reflecting investor mood, they reflect whether
+the news is good or bad (Schumaker et al., 2012).
+
+6Interestingly, the ether perpetual swap on BitMEX, an unregulated cryptocurrency derivative exchange,
+ showed price discovery over the major spot exchanges in the years before the establishment of the CME
+ future (Alexander et al., 2020).
+
+                                                           13
+3  Page 8 of 36  C. Kreuzer et al.
+
+   Sentiment in crypto markets has been addressed in various publications. One
+strand of literature examines irrational or emotional sentiment proxied by tweets on
+X (Twitter). (Kraaijeveld & De Smedt, 2020), for example, show that the sentiment
+extracted from Twitter messages can predict cryptocurrency spot returns. Shen et al.
+(2019) provides evidence that investor attention, proxied by the number of Twitter
+tweets referring to Bitcoin, predicts spot volatility and trading volume.
+
+   Another strand of literature uses Google search trends as a proxy for the degree
+of investor pessimism or fear in response to economic or geopolitical crises. Prior
+research shows that household- and investor-level crisis sentiment indicators derived
+from Google Trends are associated with cryptocurrency price movements (see e.g.,
+Liu & Tsyvinski, 2021; Burggraf et al., 2021), crash risk (see e.g., Anastasiou et al.
+2021), and price clustering (Baig et al., 2019).
+
+   Using Thomson Reuters MarketPsych, Akyildirim et al. (2025) show that DeFi
+coin-specific sentiment indices are linked to DeFi coin returns. Rognone et al. (2020)
+show that BTC/USD spot prices incorporate news sentiment differently than major
+FX pairs. Anamika and Subramaniam (2023) find that Bitcoin shows positive returns
+when investors are optimistic about Bitcoin. At the same time, an overall optimistic
+sentiment in the equity market (proxied by the Baker and Wurgler (2006) sentiment
+index or the VIX index) is negatively related to Bitcoin spot returns. Sapkota (2022)
+demonstrates a long-term relation between the sentiment of financial news and Bit-
+coin's volatility. Karalevicius et al. (2018) use a lexicon-based approach to derive
+sentiment from various Bitcoin-related sources, such as CoinDesk. They document a
+significant positive relation between sentiment and Bitcoin spot prices and argue that
+investors tend to overreact in the short run. Anamika and Subramaniam (2022) show
+that investors' sentiment, extracted from news headlines, affects cryptocurrency spot
+returns. When news sentiment is positive and investors are bullish about Bitcoin, spot
+prices increase. Aysan et al. (2024) analyze the relationship between price spikes and
+news sentiment in diverse cryptocurrencies by using Thomson Reuters MarketPsych
+Analytics. The findings of this study indicate that specific news themes are asso-
+ciated with significant increases in the price of cryptocurrencies. Akyildirim et al.
+(2024) document that sentiment is linked to spillover in cryptocurrency spot prices,
+with social-media-based sentiment measures exhibiting a stronger relationship than
+traditional news.
+
+2.2 Hypothesis development
+
+Consistent with Treiblmaier (2022), we frame cryptocurrency valuation in terms of
+extrinsic value rather than intrinsic value. This concept centers around observable
+attributes or characteristics, such as network value and scarcity, security, utility, and
+cost of production. Importantly, these determinants of extrinsic value are shaped by
+continuous advancements in technology, shifts in regulatory frameworks, and evolv-
+ing socio-political dynamics, which are arguably initially communicated to market
+participants via the traditional and social news media.
+
+   While both news media and social media distribute information relevant to cryp-
+tocurrency markets, the latter presents substantial challenges for sentiment analysis,
+questioning the reliability of these analyses. Social media language is often informal
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 9 of 36 3
+
+and relies on sarcasm, exaggeration, misplaced or excessive punctuation, and whole
+content might be bot-generated (Balahur, 2013). In contrast, articles from reputable
+news sources follow journalistic and linguistic standards and offer more rational,
+balanced, and economically relevant reporting (see e.g., Vasterman 2005). We focus
+on news sentiment, which we conceptualize as a more rational type of information
+signal. News sentiment offers a transparent and tractable way of interpreting the
+information. It enables the quantification of the directional tone of value-relevant
+developments and signals and allows us to links them to futures price movements.
+
+   In efficient markets, institutional investors are expected to process this information
+and adjust their positions or trading decisions accordingly, translating these informa-
+tion signals into prices. For example, favorable regulatory announcements or tech-
+nological advancements should strengthen the perceived value of a cryptocurrency,
+whereas negative developments, such as security breaches or obstructive regulation,
+should have the opposite effect. Therefore, we hypothesize that positive (negative)
+news sentiment will be associated with increases (decreases) in cryptocurrency
+futures prices. Due to structural and functional differences between BTC and ETH,
+we expect that BTC prices can react differently to certain news than ETH prices. At
+the same time, some developments can similarly affect both cryptocurrencies7.
+
+Hypothesis 1a: BTC futures returns are positively related to the news sentiment.
+
+Hypothesis 1b: ETH futures returns are positively related to the news sentiment.
+
+   Previous studies on commodity markets document that commodity returns often
+react asymmetrically to news sentiment, with negative sentiment evoking stronger
+market responses than positive sentiment (Maghyereh et al., 2020; Smales, 2014).
+This asymmetry may arise from psychological biases such as the influence of senti-
+ment on the risk tolerance of investors and thus the investment decisions in specula-
+tive assets (see e.g., Kuhnen & Knutson 2011; Maghyereh et al. 2020). For example,
+in a market where overall sentiment is bullish, positive news may be largely antici-
+pated, whereas negative news may challenge prevailing expectations and trigger
+sharper reactions. Dorfleitner and Zhang (2024), who focus on ESG news sentiment,
+similarly document asymmetric market responses. Given the differences in the BTC
+and ETH ecosystems, we also expect potential differences in how each futures con-
+tract reacts to positive or negative news sentiment8.
+
+Hypothesis 2a: The relation between BTC futures returns and news sentiment differs
+for negative and positive news with respect to magnitude.
+
+7Note that if there were only irrational market participants who did not trade based on value-reflecting
+ information, there would be no correlation with news sentiment. While we do not expect such an effect,
+ this would still be a possible outcome of an empirical investigation.
+8Again, it is conceivable that the reaction is symmetric if there is no positive or negative default setting
+ for cryptocurrencies.
+
+                                                           13
+3  Page 10 of 36  C. Kreuzer et al.
+
+Hypothesis 2b: The relation between ETH futures returns and news sentiment differs
+for negative and positive news with respect to magnitude.
+
+   In the absence of fundamental determinants, institutional traders in cryptocur-
+rency futures markets arguably rely on sentiment-driven signals to guide their invest-
+ment decisions. The Commitment of Traders (COT) reports from the US Commodity
+Futures Trading Commission (CFTC) categorize these traders into hedgers (com-
+mercials) and speculators (non-commercials). Several academic studies highlight the
+role of these groups of traders.
+
+   Lehecka (2015) finds that hedging and speculative position behavior display no
+explanatory power for the development of a broad range of commodity futures prices.
+Instead, a reaction of net positions to price development can be observed (Lehecka,
+2015). Regarding oil futures market, Bu (2011) finds that net positions significantly
+positively influence oil futures returns. If speculators take more long positions, it
+has a positive effect on oil futures returns. In contrast, returns fall when speculators
+take increasingly short positions (Bu, 2011). Even in the field of the gold futures
+market, Smales (2014) find the impact of net trader positions on the sentiment-return
+relationship.
+
+   In the context of cryptocurrencies, we argue that in the absence of fundamental
+data, even institutional investors and professional traders can utilize the news senti-
+ment along with the recent price movements. Thus, we also expect a relationship
+between the net positions of speculators and hedgers in the BTC and ETH futures
+market and news sentiment. If the news sentiment and the returns have been positive
+for a while, then the natural thing for speculators will be to trade the reversal, i.e. go
+short, and vice versa for hedgers9. However, the effect depends on the time frame to
+be investigated. In the very short run, positive sentiment can lead to self-reinforcing
+momentum trades from speculators (Caporale & Plastun, 2020), whereas over a lon-
+ger time horizon, price reversals can be expected (Karalevicius et al., 2018). There-
+fore, we hypothesize that the net trading positions (long minus short) of speculators
+and hedgers reflect the interpretation of sentiment signals for these two groups of
+traders.
+
+Hypothesis 3a: The net trading positions of speculators and hedgers in the BTC
+futures market are related to news sentiment.
+
+Hypothesis 3b: The net trading positions of speculators and hedgers in the ETH
+futures market are related to news sentiment.
+
+9In a situation where the hedgers' position is predominantly long, it's natural that speculators are predomi-
+ nantly short and vice versa. This follows from both groups providing liquidity to each other.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 11 of 36 3
+
+3 Data & methodology
+3.1 Baseline news sentiment
+
+Sentiment analysis and classification are subfields of Natural Language Processing
+(NLP), which entails extracting meaningful information from textual data and cat-
+egorizing it as positive, neutral, or negative (Saju et al., 2020). The most common
+approach relies on predefined dictionaries that label words as positive or negative10.
+This method assesses sentiment by calculating the proportion of positive and nega-
+tive words relative to the text length (see e.g., Loughran & McDonald 2011, Shapiro
+et al. 2022). A text with more positive than negative words is classified as positive,
+and vice versa.
+
+   Naturally, the classification of words as positive, negative, or neutral depends on
+the context. For example, the words "Whale", "HODL", or "rug pull" have little
+to no specific connotation in traditional economics but are crucial in the cryptocur-
+rency space. Since this study focuses on financial news, we utilize the Loughran and
+McDonald (2011) dictionary as a baseline sentiment measure (Sent)11, which catego-
+rizes words based on their financial meaning and is calculated as follows:
+
+                    Sent = #positive words - #negative words  (1)
+                                                #all words
+
+with Sent ranging from -1 (very negative) to +1 (very positive) (Saju et al., 2020).
+The analysis is based on Bitcoin- and Ethereum-related news articles obtained from
+the Eikon News Monitor, provided by LSEG12, which, due to their accessibility and
+broad coverage, represent news sources of particular interest to professional futures
+investors. All news items are extracted from the Bitcoin and Ethereum workspace.
+Our dataset comprises both the headlines and full texts of news articles from a range
+of crypto- and finance-focused sources (e.g., CoinDesk, Financial Times, Wall Street
+Journal, Refinitiv, Business Standard), covering the period from October 25, 2022, to
+August 30, 2024. To ensure high data quality, we implement standard preprocessing
+and cleaning procedures. Specifically, we convert all text to lowercase, apply lem-
+matization, and exclude live market updates or feeds that merely report past market
+movements.
+
+   For a structured daily time series, individual sentiment scores are aggregated by
+calculating the daily mean. Our dataset includes over 9,100 BTC and over 5,400 ETH
+
+10Dictionary-based sentiment analysis is widely used in accounting (e.g., Bochkay et al. 2023, Henry &
+Leone2016), financial research (e.g., Loughran & McDonald 2020; Kearney & Liu 2014; Heston & Sinha
+2017; Gotthelf & Uhl 2019; Smales 2014), macroeconomic forecasting (e.g., Barbaglia et al. 2023, Ash-
+win et al. 2021, Lunde & Torkar 2020), and private consumption analysis (e.g., Uhl 2011).
+
+11Note that this procedure may also fall under the term news tone. However, in accordance with the aca-
+demic literature, this study employs the term news sentiment. While news sentiment generally refers to the
+broader, quantifiable orientation of news content (positive, negative, neutral), news tone emphasizes the
+stylistic nuance in how information is conveyed (e.g., optimistic vs. pessimistic). Thus, news tone can be
+understood as a more specific manifestation within the broader concept of news sentiment. In this work,
+the rational component of our sentiment measure may alternatively be interpreted as rational news tone.
+
+12London Stock Exchange Group, formerly Refinitiv.
+
+                                                                     13
+3  Page 12 of 36                                                                 C. Kreuzer et al.
+
+news items. The overlap between BTC and ETH news amounts to approximately
+1700 news items, representing about 33% of ETH news and 19% of BTC news.
+
+   Aggregation at the daily level results in a total of around 460 news items, of which
+approx. 90% are classified as negative and 10% as positive. The significant predomi-
+nance of negative news leads to an unbalanced sample, which should be taken into
+account when interpreting the results and statistical metrics.
+
+3.2 Cryptocurrency glossary and dependency--a novel news sentiment
+approach
+
+While the Loughran and McDonald (2011) dictionary is widely used for financial
+
+news, it does not account for crypto-specific terms or expressions. Calomiris and
+
+Mamaysky (2019) claim that an article's sentiment reflects only one aspect while the
+
+frequency of specific words or phrases might also be relevant.
+
+    Inspired by Engle et al. (2020), we address the significant role of context-dependent
+
+language in interpreting topic-specific news sentiment and develop a cryptocurrency-
+
+specific dictionary. To derive an extensive list of relevant terms, we utilize GenAI,
+
+particularly ChatGPT. To ensure broad coverage, we provide ChatGPT with a diverse
+
+range of crypto-focused texts, including the Bitcoin whitepaper (Nakamoto, 2008),
+
+glossaries from crypto-centric websites, and academic publications. This resulted in
+
+a crypto-specific dictionary comprising around 150 context-relevant terms like, for
+
+example, Bitcoin, Blockchain, Altcoin, Whale, and Rug Pull.
+
+    Our approach addresses challenges in evaluating the sentiment of crypto-related
+
+news articles. Crypto-specific terms such as "blockchain" or "bitcoin" inherently lack
+
+a positive or negative meaning. Thus, those words do not influence news sentiment
+
+measures but serve as buzzwords for investors when interpreting news. Therefore,
+
+many news articles contain information that extends beyond purely crypto-specific
+
+content. To address this issue, we measure the crypto-relevant content of a news
+
+item and weight the sentiment accordingly. By incorporating both the crypto density
+
+weight (CDW) and the sentiment score (Sent) from the dictionary-based approach,
+
+we calculate the overall crypto-specific sentiment (SentCrypto) as a weighted sum.
+
+    Let N be the number of news items on a particular day, nicrypto represents the
+
+number of crypto-specific words (derived from our GenAI-cerated crypto-dictionary)
+
+in  article  i    N  and  ntotal  is  the  total  number  of  sentences  within  this  article.  We
+
+                            i
+
+define
+
+                                                   nicrypto
+                                       CDWi:= total .
+
+                                                    ni
+
+Moreover, Senti represents the sentiment as in Eq. (1). Finally, we define our overall
+daily crypto-specific sentiment (SentCrypto) as the average of the density-weighted
+sum of daily article sentiments
+
+                          SentCrypto:=     1  N   (CDWi · Senti) .                               (2)
+
+                                           N i=1
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...     Page 13 of 36 3
+
+Descriptive statistics are displayed in Table 1. The correlation between the BTC and
+ETH crypto-specific sentiment measures is approximately 0.36.
+
+3.3 Futures market
+
+We use cash-settled BTC and ETH futures contracts with an underlying size of five
+BTC (ETH), which are the most liquid cryptocurrency futures listed on the CME.
+Futures prices are from the CME Group exchange13. The CME Group is the largest
+provider of derivative financial instruments across all major asset classes, includ-
+ing interest rates, equity indices, currencies, energy, agricultural products, metals,
+and cryptocurrencies. In the area of Bitcoin futures trading, it is the second-largest
+exchange globally [41]. Moreover, there has been a significant increase in Bitcoin
+futures volume over the past years. While CME Bitcoin Futures recorded a monthly
+
+Table 1 Descriptive statistics
+
+Variables          N Min        Pctl(25) Median Pctl(75) Max            Mean St. Dev.
+
+Measurement of sentiment
+
+Sentt,BT C         461 -0.0845 -0.0305 -0.0208 -0.0123 0.0212 -0.0214 0.0138
+
+Sentt,BT C Crypto  461 -0.0733 -0.0221 -0.0141 -0.0065 0.0239 -0.0147 0.0125
+Sentt,ET H         459 -0.0608 -0.0195 -0.0111 -0.0029 0.0253 -0.0113 0.0136
+
+Sentt,ET H Crypto  459 -0.0951 -0.0175 -0.0099 -0.0028 0.0405 -0.0106 0.0132
+
+Control variables
+
+Rt-1,BT C (in %) 461 -14.6574 -1.5279 -0.0508 1.8415 12.9842 0.1144 3.1179
+
+Rt-1,ET H (in %) 459 -20.3066 -1.7399 0.0217 1.7420 14.3512 -0.0019 3.3806
+
+Irrationalt,BT C 461 -0.0777 -0.0155 -0.0039 0.0113 0.0944 -0.0026 0.0220
+
+Irrationalt,ET H 459 -0.1537 -0.0195 0.0120 0.0424 0.5515 0.0151 0.0619
+
+DJIA log returnt 461 -2.6365 -0.3764 0.0815 0.4741 3.6285 0.0550 0.7593
+
+U SDI log returnt 461 -1.3022 -0.1770 -0.0224 0.1726 0.9690 -0.0103 0.3196
+
+F F R log returnt 461 -0.2186 0.0000 0.0000 0.0000 21.7935 0.1190 1.2579
+
+CP I surpriset 461 -0.7804 0.0000 0.0000 0.0000 0.4772 -0.0028 0.0707
+
+P P I surpriset 461 -1.5376 0.0000 0.0000 0.0000 1.2208 -0.0024 0.1519
+
+CapU t surpriset 461 -1.1465 0.0000 0.0000 0.0000 1.6751 -0.0054 0.1603
+
+P ersIn surpriset 461 -0.8448 0.0000 0.0000 0.0000 1.3621 0.0028 0.1134
+
+U ER surpriset 461 -1.3291 0.0000 0.0000 0.0000 0.7580 -0.0005 0.1012
+
+GDP surpriset 461 -0.5070 0.0000 0.0000 0.0000 1.3078 0.0047 0.0856
+
+Recession dummy 461 0           0               0  0                 1  0.2126 0.4096
+
+Weekly net position of hedgers and speculators
+
+SpeculatorsBT C 95 -0.1138 -0.0617 -0.0290 0.0138 0.1447 -0.0188 0.0569
+
+HedgersBT C        95 -0.1694 -0.0350 -0.0019 0.0237 0.0602 -0.0131 0.0528
+
+SpeculatorsET H 94 -0.2617 -0.1693 -0.0883 0.0009 0.3032 -0.0660 0.1388
+
+HedgersET H        94 -0.2813 -0.0608 -0.0094 0.0697 0.1706 -0.0055 0.1067
+
+This table presents the lower and upper quartiles, median, mean, standard deviation, minimum, and
+maximum of our employed variables. Our sample ranges from om 25.10.2022 to 30.08.2024. Note that
+data on net trading positions for hedgers and speculators are published weekly
+
+13The underlying price is defined as the CME CF Bitcoin Reference Rate (BRR), which is a once-a-day
+benchmark for Bitcoin spot prices that is calculated as a volume-weighted median of trade data from mul-
+tiple eligible cryptocurrency exchanges.
+
+                                                           13
+3  Page 14 of 36  C. Kreuzer et al.
+
+volume of around 9,500 in December 2017, this figure surged to approximately 80,000
+by December 2018. However, the volume continues to grow from about 279,000 in
+October 2022 to roughly 601,000 in October 202414. The returns of futures prices are
+calculated using the logarithmic returns.
+
+   Net trading positions of speculators and hedgers are derived from the weekly
+Commitment of Trades (COT) reports for commodity futures by the US Commodity
+Futures Trading Commission (CFTC). These reports provide data on futures posi-
+tions (long and short positions) for various trader groups and various commodity
+futures. Additionally, this information is also available for BTC and ETH futures.
+Traders are categorized into three groups. If the purpose of the futures positions
+is hedging, they are assigned to the "commercial" category. If market participants
+speculate on certain market movements, they are categorized as "non-commercial".
+Futures traders who do not meet a certain size threshold are categorized in a third
+category, "Non-reportable".
+
+   Each category has a detailed breakdown of long and short positions on weekly
+basis. In line with related research on futures markets (see e.g. Smales 2014), we
+ensure comparability and standardize the weekly net positions (long-short) for both
+categories on the basis of the corresponding weekly open interest. For example, a
+negative value of the net position of non-commercial traders (Speculators) may indi-
+cate a bearish sentiment among speculative market participants. In contrast, a posi-
+tive value of commercial traders (Hedgers) net trading position may suggest a bullish
+outlook from Hedgers. The higher the value, the greater the divergence in market
+expectations between commercial and non-commercial traders.
+
+3.4 Control variables
+
+In our empirical setting, we control for several macroeconomic as well as crypto-
+specific indicators. The descriptive statistics for all variables are shown in Table 1.
+
+   Christie-David et al. (2000) and Cai et al. (2001) observed an effect of the release
+of the following macroeconomic indicators on gold futures returns: Consumer Price
+Index (CPI), Producer Price Index (PPI), Capacity Utilization (CapUt), Personal
+Income (PersIn), Unemployment Rate (UER), and Gross Domestic Product (GDP)15.
+The data for this analysis stem from the "Economic Events Monitor" of Refinitiv
+Eikon. Economic growth values are published quarterly, while the rest of the indica-
+tors are released monthly. In line with Smales (2014), these variables are additionally
+standardized to account for the different units of the indicators (Balduzzi et al., 2001).
+
+   To aggregate the monthly or quarterly datasets to a daily basis, days on which no
+data was published are set to zero. The zero represents the situation of already priced-
+in expectations (no surprise). Non-zero values exhibit differences between expecta-
+tions and reality. By utilizing these surprise variables, we account for unexpected
+macroeconomic events.
+
+   In addition to the macroeconomic indicators, we also add several crypto-specific
+control variables. In this field, Bouri et al. (2020) point to the effect of monetary pol-
+
+14For more information, see monthly CME Exchange volume reports on https://www.cmegroup.com/.
+15All indicators refer to the U.S. economy, to display the view of US investors.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 15 of 36 3
+
+icy on Bitcoin returns and volatility. Zhu et al. (2017) observe the Dow Jones Indus-
+trial Average (DJIA), the U.S. Dollar Index (USDI), and the Fed Funds Rate (FFR)
+as influencing factors on the Bitcoin price. Therefore, these indicators, obtained from
+the Federal Reserve Bank of St. Louis, are also considered in the analysis.
+
+   To control for irrational sentiment for cryptocurrency c, c  {BT C, ET H}, we
+use the Irrationalc variable, which is extracted from MarketPsych (MP) news and
+social media sentiment. The MP social media sentiment value reflects euphoria,
+whereas the MP news sentiment reflects all the rational news sentiment. Both items
+are also highly correlated, since many news may also be widely discussed on social
+media. This results in a high correlation of 0.8. To extract the irrational sentiment part
+of MP social media news sentiment, the Irrationalcindicator is calculated as the
+difference between social media sentiment and news sentiment, with the latter being
+weighted by using the Social media =  · News regression coefficient.
+
+4 Relationship between futures returns and news sentiment
+
+4.1 Overall news sentiment
+
+To explore the relationship between news sentiment and cryptocurrency futures
+returns (Hypothesis 1a/1b), we begin by examining the link between daily BTC/
+ETH futures returns and aggregated crypto-weighted measures of news sentiment
+(SentCrypto). Drawing upon the argumentation of Smales (2014), we implicitly
+assume that news articles are hardly influenced by (BTC or ETH) futures returns.
+Nevertheless, to further overcome the potential issue of endogeneity--in the sense
+that positive (negative) returns might be reflected as positive (negative) sentiment in
+contemporary news reports--we exclude pure market updates and buzz feeds, which
+primarily report past (crypto) market movements from our primary data set. How-
+ever, with an average of approximately 30 news items per day, the overall impact of
+such scarce reports is limited.
+
+   We apply a regression model of the form
+
+3                           4
+
+Rt,c = 0 + j+1N ewst-j,c + yCrypto - macroy,t
+
+j=0                         y=1                                                       (3)
+
+   6
++ y~M acroy~,t + kXk,t + t
+
+y~=1
+
+In this model, Rt,c, c  {BT C, ET H}, represents the daily log return of the BTC/
+ETH futures price (in %). The news sentiment during period t, incorporating both
+contemporaneous and lagged observations (i.e., t - 1, t - 2, t - 3), is represented by
+the sentiment vector N ewst,c for each cryptocurrency c. Formally, N ewst,c denotes
+the sentiment measure associated with cryptocurrency c, which may correspond either
+to the baseline sentiment (Sentt,c) or to the crypto-specific sentiment (Sentt,c Crypto).
+
+                                                                       13
+3  Page 16 of 36  C. Kreuzer et al.
+
+   The set of macroeconomic factors M acroy,t mirrors new macroeconomic infor-
+mation, including the Consumer Price Index, Producer Price Index, Capacity Utili-
+sation, Personal Income, Unemployment Rate, and Gross Domestic Product. In
+particular, we control for the difference between expected and actual (economic)
+effects ("surprise effect") and therefore follow the procedure of Smales (2014).
+
+   Additionally, we include crypto-specific macroeconomic controls, represented by
+Crypto - macroy,t, including the returns of the Dow Jones Industrial Average, the
+US Dollar Index, and the Fed Funds Rate (Zhu et al., 2017). Furthermore, this matrix
+entails the irrational sentiment variable Irrationalt,c. Xk,t includes the previous
+day's BTC/ETH futures return and a possible day-of-the-week effect as two control
+variables, analogous to Smales (2014). t represents the error term. To correct for
+potential serial correlation issues, we implement Newey-West standard errors with
+Akaike-information-criterion (AIC) to identify the appropriate lag length.
+
+4.1.1 BTC futures returns and BTC news sentiment relation
+
+Columns (1)-(4) of Table 2 present the results for BTC futures. We identify a positive
+and strongly significant relationship between the crypto-specific sentiment measure
+(Sentt,BT C Crypto) and the logarithmic returns of BTC futures (Rt,BT C ), suggesting that
+returns increase as BTC news sentiment becomes more positive. Even after account-
+ing for all control variables, a one-standard-deviation increase in sentiment (0.0125)
+is associated with an economically significant 0.46% increase in Rt,BT C . Conversely,
+returns decline as sentiment deteriorates, supporting Hypothesis 1a. When examin-
+ing the baseline sentiment measure proposed by Loughran and McDonald (2011)
+(Sentt,BT C ), the equal weighting of all news content appears to attenuate this rela-
+tionship. In particular, the coefficients exhibit only a weakly significant contempora-
+neous positive association (at the 10% level) in column (4). This finding underscores
+the importance of tailoring sentiment measures to crypto-specific value drivers.
+
+   The significantly negative coefficients of the lagged sentiment variable (at t - 3)
+across both sentiment measures suggest a potential overreaction to news, which is
+subsequently corrected in the following days. Notably, in the case of the weighted
+sentiment measure, the magnitude of the reversal effect is smaller than that of the
+contemporaneous impact. Column (2) also reveals an earlier indication of this rever-
+sal through a significant negative coefficient on Sentt-2,BT C Crypto . Furthermore, the cor-
+rection to the initial reaction does not appear to occur immediately. Instead, investor
+behavior suggests a "wait-and-see" approach, introducing a temporal delay before
+sentiment reversals materialize in market prices.
+
+   Four out of the six macroeconomic surprise variables are found to be statistically
+insignificant, indicating no discernible relationship with BTC futures returns. In con-
+trast, the variable CapU t surpriset exhibits a positive and highly significant rela-
+tionship at the 1% level. This may be attributed to its role as an indicator of surprises
+in overall economic performance, reflecting the current level of economic output
+relative to its potential maximum output. Higher capacity utilization signals a stron-
+ger economic environment, which tends to support the performance of riskier asset
+classes, such as equities (Nelson, 1989). In this context, Al-Khazali et al. (2018) high-
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...                Page 17 of 36 3
+
+Table 2 The Relationship between news sentiment and cryptocurrency futures returns
+
+                  Dependent variable: Rt,c with c = BT C              Dependent variable: Rt,c with
+                                                                      c = ETH
+
+                  (1)          (2)          (3)          (4)          (5)           (6)
+
+Sentt,c Crypto    27.8249      30.0176                                16.8175
+                  t = 2.2895   t = 2.5996                             t = 1.5581
+
+Sentt-1,c Crypto  6.4088       8.9035                                 -8.5399
+Sentt-2,c Crypto  t = 0.4810   t = 0.7163                             t = -0.7571
+Sentt-3,c Crypto  -19.5072     -23.3770                               8.6649
+Sentt,c                        t = -2.2578                            t = 0.6878
+                  t = -1.6270  -27.6134                               -10.7358
+                  -25.5870     t = -1.8842                            t = -0.8077
+                  t = -1.6734
+
+                                            13.2524      16.7487                    14.7174
+
+                                            t = 1.2209 t = 1.7362                   t = 1.3764
+
+Sentt-1,c                                   4.3029       5.0424                     2.7950
+                                            t = 0.3800   t = 0.4618                 t = 0.2782
+
+Sentt-2,c                                   -4.2034      -12.7909                   10.9881
+Sentt-3,c                                   t = -0.3649  t = -1.2535                t = 0.9057
+                                            -29.4792     -27.9842                   -9.2383
+
+                                            t = -1.9368 t = -2.0955                 t = -0.7601
+
+Rt-1,c            -0.0575      -0.0618      -0.0460      -0.0476      -0.0024       -0.0063
+I rrationalt,c    t = -0.8309  t = -0.9378  t = -0.6645  t = -0.7186  t = -0.0451   t = -0.1102
+                               13.3022                   13.5542      -0.6056       -0.2868
+
+DJIA log returnt               t = 1.8296                t = 1.8567   t = -0.2556   t = -0.1241
+                               1.2175                    1.2255       1.3367        1.3139
+
+USDI log returnt               t = 5.2891                t = 5.3205   t = 5.3316    t = 5.2233
+                               -0.9576                   -0.9641      -1.3974       -1.4289
+
+                               t = -2.2384               t = -2.2815 t = -2.6694    t = -2.7424
+
+FFR log returnt                0.0247                    0.0409       0.0783        0.0819
+
+                               t = 0.3469                t = 0.6178   t = 1.0966    t = 1.1771
+
+CPI surpriset                  0.5666                    0.5298       0.2583        0.3142
+
+                               t = 0.2012                t = 0.1929   t = 0.0736    t = 0.0888
+
+PPI surpriset                  -1.0068                   -0.9928      -0.8406       -0.8799
+
+CapUt surpriset                t = -1.1870               t = -1.1142  t = -1.0882   t = -1.1104
+                               3.5280                    3.4065       3.4554        3.5237
+
+                               t = 4.9119                t = 4.8607   t = 5.3040    t = 5.4936
+
+PersIn surpriset               0.0628                    -0.0633      0.0254        -0.1342
+
+                               t = 0.0671                t = -0.0663 t = 0.0254     t = -0.1292
+
+UER surpriset                  0.8196                    0.7789       -0.1297       -0.2837
+
+GDP surpriset                  t = 1.0762                t = 1.0232   t = -0.1136   t = -0.2588
+                               1.4283                    1.1336       1.3041        1.2940
+
+                               t = 2.1130                t = 1.7492   t = 2.5222    t = 2.5039
+
+Weekday           0.0307       -0.0373 0.0172            -0.0470      0.0275        0.0106
+
+                  t = 0.3211 t = -0.4029 t = 0.1777 t = -0.5052 t = 0.2709          t = 0.1075
+
+Constant          -0.1042 -0.0167 -0.2723                -0.2390      -0.0689       0.1120
+
+                  t = -0.2789 t = -0.0462 t = -0.6399 t = -0.5600 t = -0.1741       t = 0.2800
+
+                                                                                            13
+3  Page 18 of 36                                                   C. Kreuzer et al.
+
+Table 2 (continued)
+
+Observations 461     461     461     461                   459     459
+
+Newey-West   7       2       6       2                     2       1
+lags         0.0117  0.1446  0.0078  0.1392                0.1262  0.1256
+
+Adjusted R2
+
+This table shows regression results from equation 3, using cryptocurrency futures returns with c  {BT C, ET H}
+
+                                                                                                                                                              Crypto
+
+for period t as the dependent variable. We employ two different sentiment measures (and their lags): Sentc
+represents our crypto-weighted sentiment variable, and Sentc denotes the standard (Loughran & McDonald, 2011)
+sentiment approach. In columns (1)-(4), we extract sentiment from BTC-related articles, while in columns (5) and (6),
+we use ETH-related articles. The corresponding t-statistics are shown below. Newey-West lags and the Adjusted R2
+are reported upon. , ,  denote significance at the 1%, 5%, and 10% levels respectively
+
+light that, unlike gold, Bitcoin generally behaves more like a risky asset than a safe
+haven. We also find a positive and significant coefficient for the GDP surpriset,
+variable, which we interpret in a similar manner, as GDP captures broader trends in
+economic development.
+
+   Among the Bitcoin-specific variables, we observe a positive and significant coef-
+ficient of the Irrationalt,BT C variable. This suggests that more irrational-optimis-
+tic sentiment is linked with higher BTC futures returns, consistent with theoretical
+expectations. Additionally, we observe a strong and statistically significant posi-
+tive relationship between the returns of the Dow Jones Industrial Average and BTC
+futures returns. This finding aligns with Wang et al. (2020), who document a robust
+positive correlation between Bitcoin and the Dow Jones Index. Conversely, we iden-
+tify a negative and significant relationship between the US Dollar Index and BTC
+futures returns. A strengthening US Dollar is thus associated with declining Bitcoin
+returns. One possible explanation is that the US Dollar gains value when the interest
+rate level (compared to other major economies) rises in the United States (Engel &
+West, 2010). Elevated interest rates tend to exert downward pressure on risky asset
+classes (Nissim & Penman, 2003). Given Bitcoin's speculative nature and its strong
+positive correlation with equity indices such as the Dow Jones, this may help explain
+the inverse relationship with the US Dollar Index (Wang et al., 2020). No significant
+relationship is found between the Fed Funds Rate and BTC futures returns.
+
+4.1.2 ETH futures returns and ETH news sentiment relation
+
+Similar to BTC futures, we also investigate the relation between ETH news sentiment
+and ETH futures returns. The results are shown in columns (5) and (6) in Table 2.
+
+   Regarding the aggregated daily ETH new sentiment (Sentt,ET H ) as well as
+crypto-weighted ETH news sentiment variables (Sentt,ET H Crypto), we can neither
+
+observe a strong and continuous contemporary relation nor a significant reverse effect
+in the lagged news coefficients. Even the Irrationalt,ET H variable, which is solely
+based on ETH-related social media and news sentiment measures, does also show
+no significant coefficient. Consequently, the results do not provide empirical support
+for Hypothesis 1b. With regard to macroeconomic indicators, a consistent pattern
+emerges, similar to the findings in Bitcoin analyzes: Strong significance is observed
+particularly for the variables Dow Jones Industrial Average Index, US Dollar Index,
+as well as Capacity Utilisation surprise and GDP surprise.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...        Page 19 of 36 3
+
+4.2 Disaggregating news sentiment measures
+
+Next, we examine whether cryptocurrency futures returns respond differently to posi-
+
+tive and negative news sentiment (Hypothesis 2a/2b). We divide our crypto-weighted
+news sentiment into positive (Sentt,c Crypto)+ and negative (Sentt,c Crypto)- values.
+
+Mathematically, let H(x) be a Heaviside function defined by
+
+                         {             1, x > 0
+                                       0, x  0.
+                H(x) :=
+
+Then we define
+
+                                            (                        )
+                (Sentt,c Crypto)+:=Sentt,c Crypto H Sentt,c Crypto ,
+                                            (                           )
+                (Sentt,c Crypto)-:= Sentt,c Crypto H -Sentt,c Crypto ,
+
+for a cryptocurrency c  {BT C, ET H}.
+
+4.2.1 BTC positive and negative news sentiment
+
+Columns (1) and (2) of Table 3 present the results for BTC futures. Here, only the
+negative news sentiment (Sentt,c Crypto)-exhibit a significant relationship with BTC
+futures returns. Negative news sentiment is thus associated with declining futures
+returns. However, the insignificant p-value for the positive news variable displays
+an asymmetric response. All in all, there is only evidence that BTC futures returns
+react negatively to negative news. So the positive contemporary relationship between
+weighted news sentiments and Bitcoin returns observed in Section 4.1 may there-
+fore primarily be driven by negative news sentiments. It should be noted, however,
+that in the dataset used, the majority of news items were classified as negative. In
+column (2), we add further control variables. The results of BTC-related controls
+are in line with previous findings, showing a positive and significant coefficient of
+Irrationalt,BT C and DJIA log returnt, as well as negative and significant coef-
+ficient of the U SDI log returnt variable.
+
+   With respect to macroeconomic controls, we analyze the effects of both positive
+and negative market surprises, following the methodological approach of Smales
+(2014). These surprises are calculated as the difference between the actual released
+figures and the corresponding expectations derived from market surveys.
+
+   The positive market surprise, defined as a positive deviation of the actual Con-
+sumer Price Index (CPI) from its forecasted value, emerges as statistically signifi-
+cant. This finding implies that when inflation data exceeds expectations, indicating
+that surveyed forecasts underestimated actual inflation, there is a positive association
+with BTC futures returns, suggesting that higher-than-anticipated inflation is posi-
+tively related to returns on BTC futures. A potential explanation for this relationship
+
+                                                                           13
+3  Page 20 of 36                                                  C. Kreuzer et al.
+
+Table 3 Disaggregating news: Relation between positive and negative news sentiment and cryptocurrency
+futures returns
+
+                      Dependent variable: Rt,c with  Dependent variable: Rt,c with
+                      c = BTC                        c = ETH
+
+                      (1)          (2)               (3)          (4)
+
+(S entt,c C rypto )+  -62.4192     -23.4963          92.2307      63.2817
+(S entt,c C rypto )-  t = -1.1747  t = -0.4039       t = 2.4973   t = 1.7951
+                      26.3390      24.7290           5.2648       3.7544
+                      t = 2.0196   t = 1.9788        t = 0.3991   t = 0.3049
+
+Rt-1,c                -0.0367      -0.0370           -0.0105      -0.0079
+
+                      t = -0.5188  t = -0.5202       t = -0.1949  t = -0.1353
+                                   13.5496                        -1.0075
+I rrationalt,c
+
+DJIA log returnt                   t = 1.7477                     t = -0.4047
+                                   1.1691                         1.3595
+
+U SDI log returnt                  t = 5.0698                     t = 5.4959
+                                   -1.0084                        -1.2355
+
+                                   t = -2.3449                    t = -2.2616
+
+F F R log returnt                  0.0733                         0.0946
+
+(CP I surpriset)+                  t = 0.8207                     t = 1.4271
+                                   3.2183                         6.3053
+                                   t = 1.7590                     t = 2.8975
+
+(CP I surpriset)-                  2.0290                         3.5657
+                                   t = 0.4978                     t = 0.9098
+
+(P P I surpriset)+                 -0.2589                        -0.5435
+                                   t = -0.2215                    t = -0.4333
+
+(P P I surpriset)-                 1.6983                         1.0071
+(CapUt surpriset)+                 t = 1.3327                     t = 0.9171
+                                   4.2693                         3.3987
+
+(CapUt surpriset)-                 t = 3.6700                     t = 3.2315
+                                   -2.9382                        -3.3149
+
+(PersIn surpriset)+                t = -4.5915                    t = -3.8319
+(PersIn surpriset)-                -0.0142                        -0.0976
+                                   t = -0.0106                    t = -0.0641
+                                   -0.4454                        -0.1676
+                                   t = -0.5170                    t = -0.2152
+
+(U ER surpriset)+                  -0.2496                        -1.3872
+                                   t = -0.2083                    t = -0.9878
+
+(U ER surpriset)-                  -1.1887                        -0.6285
+(GDP surpriset)+                   t = -1.5079                    t = -0.4955
+                                   1.2464                         1.3686
+                                   t = 1.6290                     t = 2.3560
+
+(GDP surpriset)-                   -2.4639                        -1.0014
+                                   t = -1.1756                    t = -0.3908
+
+W eekday              0.0408       -0.0269           0.1089       0.0474
+
+                      t = 0.4161   t = -0.2601 t = 1.0462         t = 0.4341
+
+C onstant             0.4724       0.4740            -0.2777      -0.2580
+
+                      t = 1.4806   t = 1.4428        t = -0.8119  t = -0.6963
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 21 of 36 3
+
+Table 3 (continued)
+
+Observations         461     461     459                             459
+
+Newey-West lags 6            1       7                               0
+
+Adjusted R2          0.0009  0.1207  0.0054                          0.1282
+
+The table presents regression results for the contemporaneous relationship between disaggregated
+
+crypto-weighted news sentiment and cryptocurrency futures returns. In columns (1) and (2), we extract
+
+sentiment from BTC-related articles, while in columns (3) and (4), we use ETH-related articles. The
+corresponding t-statistics are shown below. Newey-West lags and the Adjusted R2 are reported upon.
+, ,  denote significance at the 1%, 5%, and 10% levels respectively
+
+is that heightened inflation may raise concerns regarding the depreciation of fiat cur-
+rencies, thereby increasing demand for alternative assets such as Bitcoin.
+
+   Furthermore, both the positive and negative surprise variables for the Capacity
+Utilization control variable are statistically significant. This suggests that deviations
+in utilization rates, either above or below expectations, may signal shifts in economic
+activity. Increases (decreases) in utilization could reflect economic expansion (con-
+traction), potentially creating a more supportive (adverse) environment for riskier
+asset classes, as discussed in Nissim and Penman (2003). In contrast, the remaining
+macroeconomic control variables do not exhibit statistically significant effects.
+
+   Taken together, while the results do not entirely confirm Hypothesis 2a, they offer
+partial support by indicating that there is a significant relationship between BTC
+futures returns and negative crypto news sentiment.
+
+4.2.2 ETH positive and negative news sentiment
+
+Splitting ETH related sentiment variables into positive and negative news (see col-
+umns (3) and (4) of Table 3), we detect a positive and significant relationship between
+positive ETH news and ETH futures returns, while negative news variables remain
+insignificant. Thus, although we cannot find any significant relation between con-
+temporary news sentiment and ETH futures returns, we observe a significant relation
+when separately examining positive news. However, such positive news is relatively
+rare (more than 75% of the aggregated news sentiments are negative), so the observed
+aggregate effect is zero. One possible explanation may be that Ether is primarily val-
+ued for its platform, enabling decentralized applications and smart contracts. Positive
+advancements or news about new projects and applications on the Ethereum platform
+may bolster investor confidence and drive up ETH futures prices. Overall, although
+the regression results do not fully confirm Hypothesis 2b, they offer partial support by
+indicating a significant relationship between ETH futures returns and positive crypto-
+specific ETH news sentiment.
+
+4.3 The linkage between net trader positions and news sentiment
+
+In this section, we explore a potential relationship between the net trading positions
+of cryptocurrency-related speculators and hedgers and crypto news sentiment. Given
+that CFTC reports are published every week, we calculate the weekly sentiments
+using an exponential moving average approach, defined by
+
+                                                                     13
+3  Page 22 of 36                                        C. Kreuzer et al.
+
+                  {  S1,                     if t = 1
+                     St + (1 - ) · EM At-1,  if t > 1.
+EM At:=
+
+In this model,  displays the smoothing factor and St denotes the respective senti-
+ment variable at time t
+
+4.3.1 BTC net trader positions and BTC news sentiment
+
+The regression results are presented in columns (1)-(4) of Table 4. A significant and
+positive relationship is observed between hedgers' net positions (column 1) and Bit-
+coin-specific news sentiment, so hedgers expand their long positions as news senti-
+ment increases. An explanation may be that high sentiment values often coincide
+with over-optimism (Stambaugh et al., 2012). Given the nature of hedgers, they may
+seek to hedge at a high level, prompting increased demand for long positions.
+
+   Column (2) shows the regression results when analyzing the speculators' net posi-
+tions as the dependent variable. Bitcoin-specific news sentiment exhibits a highly sig-
+nificant and negative relationship (at the 1% level) with speculators' positions. The
+negative coefficient suggests that speculators increase their short positions (reduce
+their long positions) during periods of very positive market sentiment. One possible
+explanation for this behavior is also that phases of high market sentiment lead to
+over-optimism and mispricing in the stock market (Stambaugh et al., 2012). Since
+both stock and cryptocurrency markets are considered sentiment-driven, similar mis-
+pricings could be observed in the Bitcoin market (Akyildirim et al., 2021; Chau et
+al., 2016). Speculators may anticipate these anomalies, resulting in increased short
+positions during such periods.
+
+   Overall, since the relation between news sentiment and hedgers' and specula-
+tors' positions shows opposite signs, this suggests that speculators increase their
+short positions as hedgers expand their long positions. This is consistent with the
+fact that speculators and hedgers provide liquidity to each other in futures markets
+(Kang et al., 2020). In Columns (3) and (4) we add further control variales. While
+Irrationalt,BT C does only show one significant coefficent at 10% level, further sig-
+nificant coefficients in the expected directions can be observed for the BTC futures
+returns. In summary, the results support Hypothesis 3a, indicating a significant rela-
+tion between the net positions of speculators and hedgers and news sentiment.16
+
+4.3.2 ETH net trader positions and ETH news sentiment
+
+Next, we examine a potential linkage between net trading positions of speculators
+and hedgers and ETH-specific news sentiment. Again, we use an exponential mov-
+ing average approach to transform the daily crypto-intensity weighted ETH news
+sentiments into weekly news sentiments. The results are shown in columns (5)-(8)
+of Table 4.
+
+16As a robustness check, we construct weekly sentiment by simply averaging daily scores. Appendix Table
+8 shows that the results are qualitatively unchanged.
+
+13
+    Table 4 Relation between net trading positions and weekly crypto-weighted news sentiment (EMA Sentt,c Crypto)                                                            Beyond pure hype: news sentiment and its role in the BTC and ETH...
+
+                        Net trading positions with c = BTC                             Net trading positions with c = ETH
+
+                        HedgersBTC SpeculatorsBTC HedgersBTC              SpeculatorsBTC HedgersETH SpeculatorsETH HedgersETH                SpeculatorsETH
+
+                        (1)         (2)                      (3)          (4)          (5)                         (6)          (7)          (8)
+
+    EMA Sentt,c Crypto  2.3125***   -2.3353***               2.4217***    -2.4734***   1.4591                      -3.2212*     0.2652       -1.5240
+    Rt,c(rolling)
+                        t = 3.4851  t = -3.2104              t = 3.3877   t = -3.1528  t = 1.1198                  t = -1.8767  t = 0.2253   t = -0.9228
+                        0.0010*     -0.0013**                0.0011**     -0.0015***   0.0030***                   -0.0037***   0.0026***    -0.0031***
+
+                        t = 1.7326  t = -2.2824              t = 2.1449   t = -2.9036  t = 3.2431                  t = -3.0135  t = 2.9001   t = -2.7802
+                                                             -0.4752      0.4711                                                -1.1860***   1.6207***
+    EMA Irrationalt,c
+
+                                                             t = -1.5907 t = 1.5142                                             t = -3.4362 t = 3.8528
+
+    DJIA (rolling)                                           0.0050       -0.0056                                               -0.0021      -0.0015
+
+                                                             t = 1.4391   t = -1.5483                                           t = -0.3109 t = -0.1696
+
+    USDI (rolling)                                           -0.0043      0.0054                                                -0.0124      0.0142
+
+                                                             t = -0.5350 t = 0.6150                                             t = -0.8602 t = 0.7280
+
+    FFR (rolling)                                            -0.0001      -0.0002                                               -0.0016      -0.0010
+
+    Constant            0.0203**    -0.0522***               t = -0.0919  t = -0.1603  0.0094                      -0.0998***   t = -0.6569  t = -0.3207
+                                                             0.0190**     -0.0509***                                            0.0141       -0.1028***
+
+                        t = 2.3259  t = -5.0736              t = 2.2509   t = -5.0500  t = 0.6343                  t = -4.7805  t = 1.0272   t = -5.2596
+
+    Observations        95          95                       95           95           94                          94           94           94
+
+    Newey-West-lags     2           2                        3            2            0                           2            1            3
+
+    Adjusted R2         0.1736      0.1725                   0.1953       0.1966       0.0665                      0.0938       0.2007       0.2588
+
+    The table presents regression results for the relationship between hedgers' and speculators' cryptocurrency futures net trading positions as the dependent variable and  Page 23 of 36 3
+    weekly crypto-weighted sentiment (EMA Sentt,c Crypto) described in sect. 4.3 with  = 21 . In columns (1)-(4), we extract sentiment from BTC-related articles, while in
+
+13  columns (5)-(8), we use ETH-related articles. The corresponding t-statistics are shown below. Newey-West lags and the Adjusted R2 are reported upon. , ,  denote
+
+    significance at the 1%, 5%, and 10% levels respectively
+3  Page 24 of 36  C. Kreuzer et al.
+
+   In line with previous findings in the context of ETH news sentiment, we find no
+ongoing evidence for a significant relation between the hedger's ETH net positions
+and ETH news sentiments and also for a negative and significant relation between
+the speculator's ETH net positions and ETH news sentiment. Thus, Hypothesis 3b
+cannot be confirmed based on the presented results.
+
+5Robustness
+
+5.1 News sentiment during different market phases
+
+Prior studies examined the question of whether cryptocurrencies in general can act
+as a safe haven asset to effectively hedge against equity market crises. Some authors
+claim that cryptocurrencies, although highly correlated with each other, are discon-
+nected or isolated from traditional financial assets (see e.g., Corbet et al. 2018). In
+its early life cycle, Bouri et al. (2017) shows that bitcoin acted as a hedge before the
+Bitcoin-US dollar price crash of 2012. However, Smales (2019), Bouri et al. (2017),
+and Shahzad et al. (2019) claim that Bitcoin no longer fulfills these properties. While
+the classification of cryptocurrencies as safe havens remains debatable, market cycles
+can, nevertheless, moderate investor responses to news sentiment.
+
+   Although our sentiment measures capture rational information processing, inves-
+tor behavior is likely to be further shaped by broader current market sentiment. In
+recent years, the cryptocurrency market has repeatedly been hit by dramatic events.
+These range from highly negative developments, such as the collapse of FTX, to
+more positively perceived ones, such as the potential introduction of a Bitcoin ETF. It
+is therefore essential to account for extraordinary market uncertainty that are specific
+to the crypto sector. Market uncertainty prompts investors to seek stability, leading to
+a shift of capital from high-risk assets to more secure and reliable investments (Burg-
+graf et al., 2021). Even if cryptocurrencies do not consistently hedge against market
+phases of financial distress, they remain speculative assets whose sensitivity to infor-
+mation may alter based on investor mood and risk tolerance. In optimistic market
+phases, characterized by positive momentum, sudden negative news contradicting
+positive expectations can cause a price correction. In contrast, in pessimistic mar-
+ket phases, positive news may receive more attention and generate stronger upward
+price adjustments due to the relative absence of positive signals. These asymmetries
+suggest that the marginal effect of sentiment on returns may vary depending on the
+prevailing market sentiment.
+
+   So as a further robustness test, we examine whether, and if so to what extent, the
+relationship between news sentiments and futures returns relies on market phases
+and, in particular, in times of optimism or pessimism and recession on crypto mar-
+kets. To identify these cycles, we use the Crypto Fear and Greed Index, which ranges
+from 0 (extreme fear) to 100 (extreme greed) and displays the overall crypto mar-
+ket sentiment. We define a recession dummy variable (DRecession) equal to one if
+the daily Crypto Fear and Greed Index underscores the previous 365 days rolling
+median, and zero otherwise. The results of BTC futures are displayed in columnes
+(1) and (2) of Table 5, while column (3) shows the results for ETH futures. However,
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 25 of 36 3
+
+since the interaction term between the news sentiment and DRecession does not show
+any significant values, we cannot find evidence for changing relations in times of
+market recessions.
+
+   Overall, our results indicate that the relationship between news sentiment and
+cryptocurrency futures returns remains robust across different market conditions.
+This suggests that professional investors in the futures market integrate sentiment
+into their trading strategies consistently, regardless of prevailing risk sentiment or
+macroeconomic uncertainty. Unlike retail-driven spot markets, where sentiment-
+driven price reactions may be amplified by speculative behavior, the futures market
+appears to process news sentiment more systematically and rationally, maintaining
+stable across both bullish and bearish phases.
+
+5.2 Waterfall-effect of BTC on ETH
+
+Gemici and Polat (2021) claim that Bitcoin volatility has a direct spillover on other
+cryptocurrencies and in particular Ether. However, there is no observable reverse
+effect of Ether on Bitcoin (Gemici & Polat, 2021). Ciaian and Rajcaniova (2018)
+examine price relationships across a broader set of cryptocurrencies and find that
+Ether prices are affected by Bitcoin prices. Even Anamika and Subramaniam (2023)
+find that the sentiment surrounding the dominant cryptocurrency, i.e., Bitcoin, has an
+impact on the prices of other cryptocurrencies, which can be described as a "water-
+fall" effect. In turn, BTC news sentiment may therefore also be related to ETH futures
+returns. As a further robustness test, we therefore use BTC news sentiment to inves-
+tigate a potential relationship with ETH futures returns. The results are shown in
+Table 6.
+
+   In contrast to the findings when analyzing the relationship between ETH news
+sentiment and ETH futures returns, the contemporary BTC sentiment variable shows
+a positive and significant effect. Even the irrational BTC variable exhibits a positive
+and significant coefficient. The results show supporting evidence that BTC news sen-
+timent in particular exhibits a significant relationship with ETH futures returns. From
+an investor perspective, this makes it clear that bitcoin-specific news sentiment plays
+a crucial role in the area of ETH futures returns. All in all, we conclude that we can
+find evidence for a waterfall effect regarding BTC news sentiment.
+
+6Conclusion
+
+This study provides new insights into the role of news sentiment in cryptocurrency
+futures markets, demonstrating its impact on BTC and ETH futures returns as well
+as net trading positions of professional market participants. Unlike traditional finan-
+cial assets, cryptocurrencies lack fundamental valuation metrics (Aysan et al., 2024),
+making rational sentiment a crucial tool for understanding price formation and insti-
+tutional trading behavior.
+
+   One of our key contributions is the enhancement of traditional sentiment anal-
+ysis. By constructing a crypto-specific dictionary and incorporating a crypto den-
+sity weight (CDW), we address a major limitation of standard dictionary-based
+
+                                                           13
+3  Page 26 of 36                                                           C. Kreuzer et al.
+
+Table 5 News sentiment and cryptocurrency futures returns for different crypto market phases
+
+                             Dependent variable: Rt,c with c  Dependent variable: Rt,c with c = ETH
+                             = BTC
+
+                             (1)          (2)                 (3)
+
+S entt,c C rypto DRecession  -23.0436     -24.6418            6.7487
+Sentt,c Crypto               t = -1.1284  t = -1.4190         t = 0.3640
+Irrationalt,c                24.6185*     26.4936**           12.7787
+                             t = 1.8982   t = 2.1977          t = 1.1436
+                                          14.1342*            -0.2805
+                                          t = 1.8494          t = -0.1175
+
+Rt-1,c                       -0.0275      -0.0270             -0.0067
+DJIA log returnt             t = -0.3808  t = -0.3908         t = -0.1212
+USDI log returnt                          1.1357***           1.3635***
+                                          t = 4.8805          t = 5.3715
+                                          -1.0483**           -1.3851***
+                                          t = -2.4803         t = -2.6350
+
+FFR log returnt                           0.0526              0.0941
+                                          t = 0.7555          t = 1.4559
+
+CPI surpriset                             -0.1212             0.4375
+                                          t = -0.0423         t = 0.1217
+
+PPI surpriset                             -1.2632             -0.7933
+CapUt surpriset                           t = -1.4368         t = -1.0017
+                                          3.5435***           3.4108***
+                                          t = 4.8163          t = 5.4344
+
+PersIn surpriset                          0.1292              -0.0192
+                                          t = 0.1447          t = -0.0192
+
+UER surpriset                             0.4522              -0.0463
+GDP surpriset                             t = 0.5614          t = -0.0425
+                                          1.4281*             1.2307**
+                                          t = 1.9193          t = 2.1506
+
+Weekday                      0.0306       -0.0375             0.0267
+
+                             t = 0.3126   t = -0.3956 t = 0.2616
+
+Constant                     0.3341       0.4605              0.0097
+
+                             t = 1.1149   t = 1.5684          t = 0.0304
+
+Observations                 461          461                 459
+
+Newey-West lags              5            3                   2
+Adjusted R2                  0.0014       0.1299              0.1268
+
+This table shows the regression results between news sentiment and BTC futures returns as the
+
+dependent variable in (1) and (2), as well as between news sentiment and ETH futures returns as the
+dependent variable in (3). Based on the Fear and Creed Index, DRecession is a dummy variable equal
+to one if the crypto market exhibits phases of pessimism and crisis. The corresponding t-statistics are
+shown below. Newey-West lags and the Adjusted R2 are reported upon. , ,  denote significance
+
+at the 1%, 5%, and 10% levels respectively
+
+approaches (Calomiris & Mamaysky, 2019). This refined methodology allows for
+a more precise identification of crypto-relevant content and provides a replicable
+framework for real-time sentiment analysis in financial markets.
+
+   By aggregating more than 9,100 BTC-related and 5,400 ETH-related individual
+news articles on a daily basis, we show that crypto-weighted news sentiment is sig-
+nificantly related to futures returns. In particular, we find a significant contemporane-
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...          Page 27 of 36 3
+
+Table 6 The Relationship between BTC news sentiment and ETH futures returns
+
+Sentt,BT C Crypto    Dependent variable: Rt,c with c = ETH
+                     21.2378*
+
+                     t = 1.8294
+
+Sentt-1,BT C Crypto  7.7957
+                     t = 0.5335
+
+Sentt-2,BT C Crypto  -14.1932
+                     t = -1.2964
+
+Sentt-3,BT C Crypto  -23.7660
+Irrationalt,BTC
+                     t = -1.2791
+                     15.7075*
+
+                     t = 1.9166
+
+Rt-1,ETH             -0.0819
+
+DJIA log returnt     t = -1.4171
+                     1.3372***
+
+USDI log returnt     t = 5.1306
+                     -1.5091***
+
+                     t = -3.0171
+
+FFR log returnt      0.0637
+
+                     t = 1.0275
+
+CPI surpriset        1.1409
+
+                     t = 0.3417
+
+PPI surpriset        -0.6566
+
+CapUt surpriset      t = -0.9736
+                     3.3215***
+
+                     t = 5.2052
+
+PersIn surpriset     0.1916
+
+                     t = 0.1816
+
+UER surpriset        -0.3375
+
+                     t = -0.3224
+
+GDP surpriset        1.1322
+
+                     t = 1.4216
+
+Weekday              -0.0041
+
+                     t = -0.0408
+
+Constant             -0.1689
+
+                     t = -0.3880
+
+Observations         458
+
+Newey-West-lags      1
+Adjusted R2          0.1469
+
+The table presents regression results for the relationship between BTC news sentiment and ETH futures
+returns as the dependent variable. Crypto-weighted sentiment (SentCrypto), which is based on BTC-
+
+related news, is used as the sentiment variable. The corresponding t-statistics are shown below. Newey-
+West lags and the Adjusted R2 are reported upon. , ,  denote significance at the 1%, 5%, and
+
+10% levels respectively
+
+                                                                             13
+3  Page 28 of 36  C. Kreuzer et al.
+
+ous relation between BTC crypto-weighted news sentiment and BTC futures returns.
+The results also reveal that this effect is mostly driven by negative news, since nega-
+tive crypto-weighted news sentiment is related with significant negative market reac-
+tions, whereas positive news sentiment shows no measurable effect. Furthermore,
+professional investors adjust their positions accordingly: hedgers increase long posi-
+tions during periods of positive sentiment, while speculators take on more short posi-
+tions. In the case of ETH futures, we solely identify a significant positive relationship
+between positive crypto-weighted ETH-news sentiment and futures returns.
+
+   Our results present evidence that the relation between news sentiment and BTC
+and ETH futures returns remains stable across market conditions. Even during peri-
+ods of heightened uncertainty in the crypto market (proxied by the Fear and Greed
+Index), sentiment-driven relationships do not change. This suggests that professional
+market participants integrate rational sentiment consistently, unlike retail-driven spot
+markets, where speculative behavior or irrational sentiment can amplify price reac-
+tions, momentum effects (Liu & Tsyvinski, 2021) or herding behavior (Celeste et al.,
+2020; Gama et al., 2019).
+
+   Additionally, we uncover a news spillover effect, as BTC-related news sentiment
+has a stronger impact on ETH futures than ETH-specific news itself. This empha-
+sizes that Bitcoin retains a dominant informational role in the broader cryptocurrency
+market, shaping expectations and trading behavior across cryptocurrency assets and
+underlines the uncovered substantial differences between the analyses of BTC and
+ETH futures.
+
+   Nevertheless, our study has some limitations. Although the crypto-density weight
+and GenAI-assisted crypto lexicon enhance topical relevance, our sentiment proxy
+remains a dictionary-based, bag-of-words construct that can potentially misclas-
+sify tone or fail to detect negation and context reliably. Future research may employ
+advanced machine learning techniques, e.g. topic modeling, and other AI tools to
+better capture context or inter-news relationship. We also aggregate sentiment on a
+daily basis and implicitly treat news as exogenous to same-day futures returns. In
+this context, an intraday analyses may be particularly fruitful to better uncover the
+news-price lead-lag. Additionally, the proposed density-weighting approach may be
+extended to other futures markets.
+
+   Our findings have important implications for institutional investors, risk manag-
+ers, and policy-makers. For professional market participants, understanding the influ-
+ence of rational news sentiment can improve trading strategies and risk management
+in cryptocurrency derivatives markets. For policymakers, our results underscore the
+importance of monitoring sentiment-driven volatility and its potential effects on mar-
+ket stability.
+
+Appendix
+
+Table 7 presents the terms included in the crypto-specific dictionary, and Figure 1
+illustrates the 15 most frequently occurring terms in BTC-related articles based on
+their relative frequency.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 29 of 36 3
+
+Table 7 Crypto-specific        Category            Term list
+dictionary                     General
+                               Scarcity            Bitcoin, BTC, ethereum, ETH, Ripple,
+This table presents the terms  Network value       Satoshi, Satoshi Nakamoto, shitcoin, Tether,
+within our crypto-specific                         XRP
+dictionary                     Security
+                                                   Bitcoin whale, diamond hands, digital
+                               Utility             currency, flash sale, halving, halving event,
+                                                   HODL, hodler, paper hands, price manipula-
+                               Cost of production  tion, whale dump, whale trade, whale wallet
+
+                                                   Aave, Armstrong, Bankman-Fried, Binance,
+                                                   Bitmain, Blockstream, Buterin, Cardano,
+                                                   Chainlink, Coinbase, Coinmarket, crypto ar-
+                                                   bitrage, crypto exchange, defi yield, FOMO,
+                                                   fomo, FOMO investor, FUD, fudder, FTX,
+                                                   Gensler, Hoskinson, Kraken, liquidity pool,
+                                                   MakerDAO, MicroStrategy, Musk, Peirce,
+                                                   Polkadot, pump, pump and dump, Ripple
+                                                   Labs, SBF, stable yield farming, Uniswap,
+                                                   Winklevoss, Wood, Zhao
+
+                                                   Cold staking, DAO, decentralization,
+                                                   decentralized, decentralized autonomous
+                                                   organization, decentralized exchange, defi,
+                                                   defi exchange, DLT, distributed ledger,
+                                                   distributed ledger technology, ledger, PoS,
+                                                   PoW, private key, proof of stake, proof of
+                                                   work, public key, staking, staking pool,
+                                                   validator, wallet, wallet address
+
+                                                   Bitcoin ETF, block, blockchain, block size,
+                                                   CBDC, central bank digital currency, chain
+                                                   migration, crypto, crypto asset manage-
+                                                   ment, crypto assets, crypto-centric, crypto
+                                                   derivatives, crypto ETF, crypto hedge fund,
+                                                   cryptocurrency, crypto swap, fee structure,
+                                                   fiat on-ramp, fork, gas fee, gas limit, gas
+                                                   war, genesis block, governance token, ICO,
+                                                   initial coin offering, layer 1, layer 2, layer 2
+                                                   solution, network fees, NFT, non-fungible
+                                                   token, off-chain, on-chain, security token
+                                                   offering, smart contracts, stablecoin, STO,
+                                                   token, tokenized asset, utility token
+
+                                                   Crypto mining farm, hash power, hash rate,
+                                                   mining, network difficulty
+
+                                                                     13
+3  Page 30 of 36  C. Kreuzer et al.
+
+Fig. 1 Top 15 terms by relative frequency in BTC articles
+
+   Table 8 reports a robustness check using the mean value of sentiment.
+
+13
+    Table 8 Relation between net trading positions and weekly crypto-weighted news sentiment (Mean Sentt,c Crypto)                                                           Beyond pure hype: news sentiment and its role in the BTC and ETH...
+
+                         Net trading positions with c = BTC                             Net trading positions with c = ETH
+
+                         Hedgersc    Speculatorsc            Hedgersc     Speculatorsc  Hedgersc                    Speculatorsc  Hedgersc     Speculatorsc
+
+                         (1)         (2)                     (3)          (4)           (5)                         (6)           (7)          (8)
+
+    Mean Sentt,c Crypto  2.4869***   -2.4840***              2.5464***    -2.5361***    0.7818*                     -1.3214**     0.4213       -0.7715
+        Rt,c (rolling)
+                         t = 4.4543  t = -4.2284             t = 3.9014   t = -3.4939   t = 1.8847                  t = -2.4785   t = 1.1681   t = -1.5889
+                         0.0013**    -0.0016***              0.0016***    -0.0020***    0.0026***                   -0.0032***    0.0026***    -0.0032***
+
+                         t = 2.2267  t = -2.7195             t = 2.9251   t = -3.5954   t = 2.8711                  t = -2.7457   t = 3.0919   t = -3.1112
+                                                             -0.5926**    0.5934**                                                -0.9297***   1.2982***
+    Mean Irrationalt,c
+
+    DJIA(rolling)                                            t = -2.1433  t = 2.0670                                              t = -3.5078  t = 4.0155
+                                                             0.0062*      -0.0070**                                               -0.0034      0.0002
+
+                                                             t = 1.9347   t = -2.0697                                             t = -0.4985  t = 0.0275
+
+    USDI(rolling)                                            -0.0037      0.0041                                                  -0.0155      0.0173
+
+                                                             t = -0.4824  t = 0.4841                                              t = -1.0013  t = 0.8256
+
+    FFR(rolling)                                             -0.0010      0.0006                                                  -0.0015      -0.0009
+
+    Constant             0.0218***   -0.0533***              t = -0.7377  t = 0.3794    0.0294*                     -0.1254***    t = -0.6123  t = -0.2711
+                                                             0.0196**     -0.0505***                                              0.0264       -0.1164***
+
+                         t = 2.9031  t = -6.3716             t = 2.4598   t = -5.3184   t = 1.8789                  t = -5.8210   t = 1.6600   t = -5.3144
+
+    Observations         95          95                      95           95            94                          94            94           94
+
+    Newey-West-lags      1           1                       1            2             1                           2             3            4                             Page 31 of 36 3
+    Adjusted R2          0.1912      0.1871                  0.2523       0.2470        0.1000                      0.1377        0.1967       0.2623
+
+13  The table presents regression results for the relationship between hedgers' and speculators' cryptocurrency futures net trading positions as the dependent variable and
+
+    weekly crypto-weighted sentiment (Mean Sentt,c Crypto). In columns (1)-(4), we extract sentiment from BTC-related articles, while in columns (5)-(8), we use ETH-
+    related articles. The corresponding t-statistics are shown below. Newey-West lags and the Adjusted R2 are reported upon. , ,  denote significance at the 1%, 5%,
+
+    and 10% levels respectively
+3  Page 32 of 36                                                    C. Kreuzer et al.
+
+Author contributions All authors contributed to the study conception and design. Material preparation,
+data collection, and analysis were performed by Christian Kreuzer and Christian Sparrer. The first draft of
+the manuscript was written by all authors. All authors read, reviewed, and approved the final manuscript.
+
+Funding Open Access funding enabled and organized by Projekt DEAL.
+
+Data availability All data sources are declared in the manuscript.
+
+Declarations
+
+Competing interests The authors declare no competing interests.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party material in this
+article are included in the article's Creative Commons licence, unless indicated otherwise in a credit line
+to the material. If material is not included in the article's Creative Commons licence and your intended use
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit http://creativecommons.org/licen
+ses/by/4.0/.
+
+References
+
+Abraham, R., & El-Chaarani, H. (2022). A mathematical formulation of the valuation of ether and ether
+      derivatives as a function of investor sentiment and price jumps. Journal of Risk and Financial Man-
+      agement , 15(12), 591. https://doi.org/10.3390/jrfm15120591. Open Access Article.
+
+Akyildirim, E., Aysan, A. F., Cepni, O., & Corbet, S. (2025). News sentiment and DeFi coin returns: An
+      empirical analysis. International Review of Economics & Finance, 103, Article 104483.
+
+Akyildirim, E., Aysan, A. F., Cepni, O., & Darendeli, S. P. C. (2021). Do investor sentiments drive crypto-
+      currency prices? Economics Letters, 206, Article 109980.
+
+Akyildirim, E., Aysan, A. F., Cepni, O., & Serbest, Ö. (2024). Sentiment matters: The effect of news-media
+      on spillovers among cryptocurrency returns. The European Journal of Finance, 30(14), 1577-1613.
+
+Akyildirim, E., Corbet, S., Katsiampa, P., Kellard, N., & Sensoy, A. (2020). The development of bitcoin
+      futures: Exploring the interactions between cryptocurrency derivatives. Finance Research Letters,
+      34, Article 101234.
+
+Aleti, S., & Mizrach, B. (2021). Bitcoin spot and futures market microstructure. Journal of Futures Mar-
+      kets, 41(2), 194-225.
+
+Alexander, C., Choi, J., Massie, H. R. A., & Sohn, S. (2020). Price discovery and microstructure in ether
+      spot and derivative markets. International Review of Financial Analysis, 71, Article 101506.
+
+Alexander, C., & Heck, D. F. (2020). Price discovery, high-frequency trading and jumps in bitcoin mar-
+      kets. Journal of Financial Stability, 50, Article 100776.
+
+Al-Khazali, O., Bouri, E., & Roubaud, D. (2018). The impact of positive and negative macroeconomic
+      news surprises: Gold versus bitcoin. Economics Bulletin, 38(1), 373-382.
+
+Anamika, A., & Subramaniam, S. (2022). Do news headlines matter in the cryptocurrency market? Applied
+      Economics, 54(54), 6322-6338.
+
+Anamika, C. M., & Subramaniam, S. (2023). Does sentiment impact cryptocurrency? Journal of Behav-
+      ioral Finance, 24(2), 202-218.
+
+Anastasiou, D., Ballis, A., & Drakos, K. (2021). Cryptocurrencies' price crash risk and crisis sentiment.
+      Finance Research Letters, 42, Article 101928.
+
+Ashwin, J., Kalamara, E., & Saiz, L. (2021). Nowcasting euro area GDP with news sentiment: A tale of
+      two crises. Journal of Applied Econometrics., 39, 887-905.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 33 of 36 3
+
+Augustin, P., Rubtsov, A., & Shin, D. (2023). The impact of derivatives on spot markets: Evidence from
+      the introduction of bitcoin futures contracts. Management Science, 69(11), 6752-6776. https://doi.o
+      rg/10.1287/mnsc.2023.4900
+
+Aysan, A. F., Caporin, M., & Cepni, O. (2024). Not all words are equal: Sentiment and jumps in the cryp-
+      tocurrency market. Journal of International Financial Markets, Institutions and Money, 91, Article
+      101920.
+
+Baig, A., Blau, B. M., & Sabah, N. (2019). Price clustering and sentiment in bitcoin. Finance Research
+      Letters, 29, 111-116.
+
+Baker, M., & Wurgler, J. (2006). Investor sentiment and the cross-section of stock returns. The journal of
+      Finance, 61(4), 1645-1680.
+
+Balahur, A. (2013). Sentiment analysis in social media texts. In: Proceedings of the 4th Workshop on Com-
+      putational Approaches to Subjectivity, Sentiment and Social Media Analysis, 120-128.
+
+Balduzzi, P., Elton, E. J., & Green, T. C. (2001). Economic news and bond prices: Evidence from the U.S.
+      Treasury Market. The Journal of Financial and Quantitative Analysis, 36(4), 523-543.
+
+Ballis, A., & Drakos, K. (2020). Testing for herding in the cryptocurrency market. Finance Research Let-
+      ters, 33, Article 101210.
+
+Barbaglia, L., Consoli, S., & Manzan, S. (2023). Forecasting with economic news. Journal of Business &
+      Economic Statistics, 41(3), 708-719.
+
+Baur, D. G., & Smales, L. A. (2022). Trading behavior in bitcoin futures: Following the smart money.
+      Journal of Futures Markets, 42(7), 1304-1323.
+
+Bochkay, K., Brown, S. V., Leone, A. J., & Tucker, J. W. (2023). Textual analysis in accounting: What's
+      next? Contemporary accounting research, 40(2), 765-805.
+
+Bouri, E., Azzi, G., & Dyhrberg, A. H. (2017). On the return-volatility relationship in the bitcoin market
+      around the price crash of 2013. Economics, 11(1), 2.
+
+Bouri, E., Molnár, P., Azzi, G., Roubaud, D., & Hagfors, L. I. (2017). On the hedge and safe haven proper-
+      ties of bitcoin: Is it really more than a diversifier? Finance Research Letters, 20, 192-198.
+
+Bouri, E., Shahzad, S. J. H., Roubaud, D., Kristoufek, L., & Lucey, B. (2020). Bitcoin, gold, and com-
+      modities as safe havens for stocks: New insight through wavelet analysis. The Quarterly Review of
+      Economics and Finance, 77, 156-164.
+
+Brown, G. W., & Cliff, M. T. (2004). Investor sentiment and the near-term stock market. Journal of Empir-
+      ical Finance, 11(1), 1-27. https://doi.org/10 .101 6/j.jempfin .2003 .09.001
+
+Bu, H. (2011). Price dynamics and speculators in crude oil futures market. Systems Engineering Procedia,
+      2, 114-121.
+
+Burggraf, T., Huynh, T. L. D., Rudolf, M., & Wang, M. (2021). Do fears drive bitcoin? Review of Behav-
+      ioral Finance, 13(3), 229-258.
+
+Cai, J., Cheung, Y.-L., & Wong, M. C. S. (2001). What moves the gold market? Journal of Futures Mar-
+      kets, 21(3), 257-278.
+
+Calomiris, C. W., & Mamaysky, H. (2019). How news and its context drive risk and returns around the
+      world. Journal of Financial Economics, 133(2), 299-336.
+
+Caporale, G. M., & Plastun, A. (2020). Momentum effects in the cryptocurrency market after one-day
+      abnormal returns. Financial Markets and Portfolio Management, 34(3), 251-266.
+
+Celeste, V., Corbet, S., & Gurdgiev, C. (2020). Fractal dynamics and wavelet analysis: Deep volatility and
+      return properties of bitcoin, ethereum and ripple. The Quarterly Review of Economics and Finance,
+      76, 310-324.
+
+Chau, F., Deesomsak, R., & Koutmos, D. (2016). Does investor sentiment really matter? International
+      Review of Financial Analysis, 48, 221-232.
+
+Cheah, E.-T., & Fry, J. (2015). Speculative bubbles in bitcoin markets? An empirical investigation into the
+      fundamental value of bitcoin. Economics letters, 130, 32-36.
+
+Chen, C.Y.-H., & Vinogradov, D. (2021). Coins with benefits: On existence, pricing kernel and risk pre-
+      mium of cryptocurrencies. Pricing Kernel and Risk Premium of Cryptocurrencies. 49. http://dx.doi.
+      org/10.2139/ssrn.3864578
+
+Chen, Y.-L., & Yang, J. J. (2024). Time-varying price discovery in regular and microbitcoin futures. Jour-
+      nal of Futures Markets, 44(1), 103-121.
+
+Christie-David, R., Chaudhry, M., & Koch, T. W. (2000). Do macroeconomics news releases affect gold
+      and silver prices? Journal of Economics and Business, 52(5), 405-421.
+
+Chu, J., Zhang, Y., & Chan, S. (2019). The adaptive market hypothesis in the high frequency cryptocur-
+      rency market. International Review of Financial Analysis, 64, 221-231.
+
+                                                                     13
+3  Page 34 of 36  C. Kreuzer et al.
+
+Ciaian, P., Rajcaniova, M., et al. (2018). Virtual relationships: Short-and long-run evidence from bit-
+      coin and altcoin markets. Journal of International Financial Markets, Institutions and Money, 52,
+      173-195.
+
+Coindesk: CME Group Top Bitcoin Future Exchange. https://www.coinde sk.c om/ma rkets /2023/10/3 0/c
+      me -whis ker-aw ay-from-replac ing-binanc e-as-top-b itcoin -futures-exchange/ Accessed 03.02.2024
+
+Cong, L. W., Li, Y., & Wang, N. (2020). Tokenomics: Dynamic adoption and valuation. The Review of
+      Financial Studies., 34(3), 1105-1155. https://doi.org/10.1093/rfs/hhaa089
+
+Corbet, S., Lucey, B., Peat, M., & Vigne, S. (2018). Bitcoin futures-what use are they? Economics Letters,
+      172, 23-27.
+
+Corbet, S., Meegan, A., Larkin, C., Lucey, B., & Yarovaya, L. (2018). Exploring the dynamic relationships
+      between cryptocurrencies and other financial assets. Economics letters, 165, 28-34.
+
+Dorfleitner, G., & Zhang, R. (2024). Esg news sentiment and stock price reactions: A comprehensive
+      investigation via bert. Schmalenbach Journal of Business Research, 76(2), 197-244. https://doi.org/
+      10.1007/s41471-024-00185-3
+
+Engel, C., & West, K. D. (2010). Global interest rates, currency returns, and the real value of the dollar.
+      American Economic Review, 100(2), 562-567.
+
+Engle, R. F., Giglio, S., Kelly, B., Lee, H., & Stroebel, J. (2020). Hedging climate change news. The
+      Review of Financial Studies, 33(3), 1184-1216.
+
+Entrop, O., Frijns, B., & Seruset, M. (2020). The determinants of price discovery on bitcoin markets.
+      Journal of Futures Markets, 40(5), 816-837. https://doi.org/10.1002/fut.22101https://onlinelibrary.
+      wiley .com/doi/pd f/10 .1002/fut.22101.
+
+Figuerola-Ferretti, I., & Gonzalo, J. (2010). Modelling and measuring price discovery in commodity mar-
+      kets. Journal of Econometrics, 158(1), 95-107.
+
+Frino, A., Gaudiosi, R., Webb, R. I., & Ivy Zhou, Z. (2025). Price discovery in bitcoin spot or futures? The
+      jury is out. Journal of Futures Markets. https://doi.org/10.1002/fut.22560
+
+Gama, S. P. V. J., Klotzle, M. C., Pinto, A. C. F., & Gomes, L. L. (2019). Herding behavior and contagion
+      in the cryptocurrency market. Journal of Behavioral and Experimental Finance, 22, 41-50.
+
+García-Monleón, F., Danvila-del-Valle, I., & Lara, F. J. (2021). Intrinsic value in crypto currencies. Tech-
+      nological Forecasting and Social Change, 162, Article 120393.
+
+Gemici, E., & Polat, M. (2021). Causality-in-mean and causality-in-variance among bitcoin, litecoin, and
+      ethereum. Studies in Economics and Finance, 38(4), 861-872.
+
+Gotthelf, N., & Uhl, M. W. (2019). News sentiment: A new yield curve factor. Journal of Behavioral
+      Finance, 20(1), 31-41.
+
+Henry, E., & Leone, A. J. (2016). Measuring qualitative information in capital markets research: Compari-
+      son of alternative methodologies to measure disclosure tone. The Accounting Review, 91(1), 153-178.
+
+Heston, S. L., & Sinha, N. R. (2017). News vs. sentiment: Predicting stock returns from news stories.
+      Financial Analysts Journal, 73(3), 67-83.
+
+Kang, W., Rouwenhorst, K. G., & Tang, K. (2020). A tale of two premiums: The role of hedgers and specu-
+      lators in commodity futures markets. The Journal of Finance, 75(1), 377-417.
+
+Kapar, B., & Olmo, J. (2019). An analysis of price discovery between Bitcoin futures and spot markets.
+      Economics Letters, 174, 62-64.
+
+Karalevicius, V., Degrande, N., & De Weerdt, J. (2018). Using sentiment analysis to predict interday bit-
+      coin price movements. The Journal of Risk Finance, 19(1), 56-75.
+
+Kearney, C., & Liu, S. (2014). Textual sentiment in finance: A survey of methods and models. Interna-
+      tional Review of Financial Analysis, 33, 171-185.
+
+Kim, S.-H., & Kim, D. (2014). Investor sentiment from internet message postings and the predictability
+      of stock returns. Journal of Economic Behavior & Organization, 107, 708-729. https://doi.org/10.1
+      016/j.je bo.2014.04.009
+
+Kraaijeveld, O., & De Smedt, J. (2020). The predictive power of public twitter sentiment for forecast-
+      ing cryptocurrency prices. Journal of International Financial Markets, Institutions and Money, 65,
+      Article 101188.
+
+Kristjanpoller, W., Nekhili, R., & Bouri, E. (2024). Ethereum futures and the efficiency of cryptocurrency
+      spot markets. Physica A: Statistical Mechanics and its Applications, 654, Article 130161. https://doi
+      .org/10.1016/j.physa.2024.130161
+
+Kuhnen, C. M., & Knutson, B. (2011). The influence of affect on beliefs, preferences, and financial deci-
+      sions. Journal of Financial and Quantitative Analysis, 46(3), 605-626.
+
+Lehecka, G. V. (2015). Do hedging and speculative pressures drive commodity prices, or the other way
+      round? Empirical Economics, 49, 575-603.
+
+13
+Beyond pure hype: news sentiment and its role in the BTC and ETH...  Page 35 of 36 3
+
+Li, T., Chen, H., Liu, W., Yu, G., & Yu, Y. (2023). Understanding the role of social media sentiment in
+      identifying irrational herding behavior in the stock market. International Review of Economics &
+      Finance, 87, 163-179. https://doi.org/10.1016/j.iref.2023.04.016
+
+Li, K., Qi, G., Shang, G., Deng, W., Xu, M., & Cheng, X. (2025). Blockchain and Web3.0 Technology
+      innovation and application. In: G. Zhao, J. Weng, Z. Tian, L. Zhu, & Z. Zheng (Eds.), A treatment
+      of eip-1559: Enhancing transaction fee mechanism through n th-price auction. 214-226. Singapore:
+      Springer.
+
+Liu, Y., & Tsyvinski, A. (2021). Risks and returns of cryptocurrency. The Review of Financial Studies,
+      34(6), 2689-2727.
+
+Loughran, T., & McDonald, B. (2011). When is a liability not a liability? Textual analysis, dictionaries, and
+      10-Ks. The Journal of Finance, 66(1), 35-65.
+
+Loughran, T., & McDonald, B. (2020). Textual analysis in finance. Annual Review of Financial Econom-
+      ics, 12(1), 357-375.
+
+Lunde, A., & Torkar, M. (2020). Including news data in forecasting macro economic performance of china.
+      Computational Management Science, 17(4), 585-611.
+
+Maghyereh, A., Abdoh, H., & Al-Shboul, M. (2020). The impact of sentiment on commodity return and
+      volatility. Review of Pacific Basin Financial Markets and Policies, 23(04), 2050034.
+
+Makarov, I., & Schoar, A. (2020). Trading and arbitrage in cryptocurrency markets. Journal of Financial
+      Economics, 135(2), 293-319.
+
+Matic, J. L., Packham, N., & Härdle, W. K. (2023). Hedging cryptocurrency options. Review of Derivatives
+      Research, 26(1), 91-133.
+
+Nakamoto, S. (2008). Bitcoin: A peer-to-peer electronic cash system
+Nelson, R. A. (1989). On the measurement of capacity utilization. The Journal of Industrial Economics,
+
+      37, 273-286.
+Nissim, D., & Penman, S. H. (2003). The association between changes in interest rates, earnings, and
+
+      equity values. Contemporary Accounting Research, 20(4), 775-804.
+Pagnotta, E., & Buraschi, A. (2018). An equilibrium valuation of bitcoin and decentralized network assets.
+
+      In: AFA 2019 Atlanta Meetings Paper. JEL Codes: G12, G15, G18. https://www.rdaindex.com
+Pagnotta, E. S. (2021). Decentralizing money: Bitcoin prices and blockchain security. The Review of
+
+      Financial Studies, 35(2), 866-907.
+Robertson, K., & Zhang, R. (2025). Price discovery in bitcoin spot and futures markets. Journal of Inter-
+
+      national Money and Finance, 159, Article 103415.
+Rognone, L., Hyde, S., & Zhang, S. S. (2020). News sentiment in the cryptocurrency market: An empirical
+
+      comparison with forex. International Review of Financial Analysis, 69, Article 101462.
+Saju, B., Jose, S., & Antony, A. (2020). Comprehensive study on sentiment analysis: Types, approaches,
+
+      recent applications, tools and apis. In: 2020 Advanced Computing and Communication Technologies
+      for High Performance Applications (ACCTHPA), 186-193 . IEEE
+Sapkota, N. (2022). News-based sentiment and bitcoin volatility. International Review of Financial Analy-
+      sis, 82, Article 102183.
+Schmeling, M. (2009). Investor sentiment and stock returns: Some international evidence. Journal of
+      Empirical Finance, 16(3), 394-408. https://doi.org /1 0.1 01 6 /j.jemp fin .2 009 .01.002
+Schumaker, R. P., Zhang, Y., Huang, C.-N., & Chen, H. (2012). Evaluating sentiment in financial news
+      articles. Decision Support Systems, 53(3), 458-464. https://doi.org/10.1016/j.dss.2012.03.001
+Sebastião, H., & Godinho, P. (2020). Bitcoin futures: An effective tool for hedging cryptocurrencies.
+      Finance Research Letters, 33, Article 101230.
+Shahzad, S. J. H., Bouri, E., Roubaud, D., Kristoufek, L., & Lucey, B. (2019). Is bitcoin a better safe-haven
+      investment than gold and commodities? International Review of Financial Analysis, 63, 322-330.
+Shapiro, A. H., Sudhof, M., & Wilson, D. J. (2022). Measuring news sentiment. Journal of econometrics,
+      228(2), 221-243.
+Shen, D., Urquhart, A., & Wang, P. (2019). Does twitter predict bitcoin? Economics letters, 174, 118-122.
+Shi, S., Zhai, J., & Wu, Y. (2024). Informational inefficiency on bitcoin futures. The European Journal of
+      Finance, 30(6), 642-667.
+Smales, L. A. (2014). News sentiment in the gold futures market. Journal of Banking & Finance, 49,
+      275-286.
+Smales, L. A. (2019). Bitcoin as a safe haven: Is it even worth considering? Finance Research Letters,
+      30, 385-393.
+Stambaugh, R. F., Yu, J., & Yuan, Y. (2012). The short of it: Investor sentiment and anomalies. Journal of
+      Financial Economics, 104(2), 288-302.
+
+                                                                     13
+3  Page 36 of 36  C. Kreuzer et al.
+
+Treiblmaier, H. (2022). Do cryptocurrencies really have (no) intrinsic value? Electronic markets, 32(3),
+      1749-1758.
+
+Tse, Y. (1999). Price discovery and volatility spillovers in the djia index and futures markets. Journal of
+      Futures markets, 19(8), 911-930.
+
+Uhl, M. W. (2011). Explaining US consumer behavior with news sentiment. ACM Transactions on Man-
+      agement Information Systems (TMIS), 2(2), 1-18.
+
+Urquhart, A. (2016). The inefficiency of bitcoin. Economics Letters, 148, 80-82.
+Van Vliet, B. (2018). An alternative model of metcalfe's law for valuing bitcoin. Economics Letters, 165,
+
+      70-72.
+Vasterman, P. L. (2005). Media-hype: Self-reinforcing news waves, journalistic standards and the con-
+
+      struction of social problems. European Journal of Communication, 20(4), 508-530.
+Wang, X., Chen, X., & Zhao, P. (2020). The relationship between bitcoin and stock market. International
+
+      Journal of Operations Research and Information Systems (IJORIS), 11(2), 22-35.
+Wu, J., Xu, K., Zheng, X., & Chen, J. (2021). Fractional cointegration in bitcoin spot and futures markets.
+
+      Journal of Futures Markets, 41(9), 1478-1494.
+Zhang, X. (2023). The valuation and investment risk of cryptocurrency: Evidence from bitcoin and ethe-
+
+      reum. BCP Business & Management, 44, 441-448. https://doi.org/10.54691/bcpbm.v44i.4853
+Zhu, Y., Dickinson, D., & Li, J. (2017). Analysis on the influence factors of bitcoin's price based on vec
+
+      model. Financial Innovation, 3(1), 1-13.
+
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+13
+

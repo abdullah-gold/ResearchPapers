@@ -1,0 +1,191 @@
+<div class="pb"></div>
+<h1 id="p5"><span class="hnum">V</span>Execution Roadmap</h1>
+
+<p>Sixty-four working days, three students, one supervisor. The schedule below is anchored to the Spring 2026 term and is expressed in <strong>relative day numbers (D1–D64)</strong> so it can be mapped onto actual calendar dates once the term start is confirmed. Each phase has an <strong>exit criterion</strong> — a demonstrable artefact, not an activity — because a phase without a gate is a phase that slips.</p>
+
+<h2 id="p5-1">5.1 Schedule shape and workstream ownership</h2>
+
+<p>The three members should not all work on the same thing. The proposal assigns three names but no ownership. Recommended split, mapping to the modules of Part IV:</p>
+
+<table>
+<tr><th style="width:16%">Member</th><th style="width:26%">Primary workstream</th><th style="width:28%">Owns</th><th>Secondary duty</th></tr>
+<tr>
+  <td><strong>Hasnayen Jawad</strong><br><span class="small">0822310105101011</span></td>
+  <td><strong>Data &amp; Infrastructure</strong></td>
+  <td>L1 ingestion, L0 storage, config &amp; secrets, CI, Docker, the daily pipeline, the API service</td>
+  <td>Owns the data-quality dashboard panel and the reproducibility manifest</td>
+</tr>
+<tr>
+  <td><strong>Md. Abdullah</strong><br><span class="small">0822310105101038</span></td>
+  <td><strong>Features, Sentiment &amp; Statistics</strong></td>
+  <td>L2 features, the sentiment engine, the lexicon, the regime detectors, the statistical test harness</td>
+  <td>Owns the sentiment validation study and the data dictionary</td>
+</tr>
+<tr>
+  <td><strong>Tahmid Khan Mojlish</strong><br><span class="small">0822310105101055</span></td>
+  <td><strong>Modelling, Evaluation &amp; Presentation</strong></td>
+  <td>L3 models, L4 evaluation, the backtester, the dashboard, the thesis figures</td>
+  <td>Owns the model cards and the experiment registry UI</td>
+</tr>
+</table>
+<p class="caption">Table 5.1 — Workstream ownership. Rotation: each member presents the other two members' workstream at the weekly supervisor review, which surfaces misunderstanding before it becomes a defect.</p>
+
+<h3>Standing rules</h3>
+<ul>
+  <li><strong>No single person owns a module alone.</strong> Every module has a primary and a reviewer. The reviewer must be able to run it.</li>
+  <li><strong>Interface-first.</strong> Agree the data contracts (§3.6) in week 1 and do not change them without a version bump and a note in the ADR log.</li>
+  <li><strong>Merge train.</strong> No branch lives more than three days. Every merge triggers CI: lint, unit tests, the causality test and the integration test.</li>
+  <li><strong>Friday demo.</strong> Thirty minutes, all three present, run the pipeline live. If it does not run, that is the work for the weekend.</li>
+</ul>
+
+<h2 id="p5-2">5.2 Phase-by-phase plan</h2>
+
+<table class="tight">
+<tr><th style="width:5%">Phase</th><th style="width:7%">Days</th><th style="width:24%">Work</th><th style="width:30%">Exit criterion (demonstrable)</th><th>Owner</th></tr>
+<tr>
+  <td><strong>P0</strong><br>Setup</td>
+  <td>D1–D3</td>
+  <td>Repo scaffold, venv + pinned deps, Makefile, pre-commit, config schema, Docker base image, CI workflow, README skeleton</td>
+  <td><code>make setup &amp;&amp; make test</code> passes on a clean clone; <code>make run</code> prints a placeholder. Env lock committed.</td>
+  <td>Hasnayen</td>
+</tr>
+<tr>
+  <td><strong>P1</strong><br>Data acquisition</td>
+  <td>D4–D12</td>
+  <td>HTTP client + rate limiter + circuit breaker; Binance collector; FRED collector (with release dates); RSS news collector; CoinGecko rank collector; raw landing zone; daily orchestrator</td>
+  <td>Raw data for ≥ 12 assets × 3 years in <code>data/raw/</code>; a manifest per run; the freshness panel shows all sources green</td>
+  <td>Hasnayen</td>
+</tr>
+<tr>
+  <td><strong>P2</strong><br>Universe &amp; tiers</td>
+  <td>D9–D14</td>
+  <td>Market-cap snapshots; listing dates; tier assignment rules; exclusions; delisting detection; per-asset history coverage</td>
+  <td><code>universe.parquet</code> with a tier per asset per date; a coverage report showing which assets qualify for the panel and when they enter</td>
+  <td>Hasnayen + Md. Abdullah</td>
+</tr>
+<tr>
+  <td><strong>P3</strong><br>Feature layer</td>
+  <td>D13–D22</td>
+  <td>Technical indicator library; macro alignment with release dates and lags; derived features; trading calendar; the <code>as_of</code> join engine; the causality test</td>
+  <td><strong>The causality test passes on the full feature set.</strong> Feature store written with the documented schema</td>
+  <td>Md. Abdullah</td>
+</tr>
+<tr>
+  <td><strong>P4</strong><br>Sentiment engine</td>
+  <td>D18–D28</td>
+  <td>Loughran–McDonald dictionary; crypto topic + sentiment lexicons; CDW; daily aggregation; EWMA/z-score; carry-forward; validation study (200-article double labelling, κ; Financial PhraseBank benchmark)</td>
+  <td>κ reported; benchmark accuracy reported; sentiment panel visible in the dashboard; lexicon file with per-term justification</td>
+  <td>Md. Abdullah</td>
+</tr>
+<tr>
+  <td><strong>P5</strong><br>Baselines &amp; splits</td>
+  <td>D26–D33</td>
+  <td>Walk-forward splitter with embargo; purging variant; random-walk / MA / Ridge baselines; metric library; the first end-to-end out-of-sample run on baselines only</td>
+  <td>Random-walk and Ridge baselines produce out-of-sample predictions under walk-forward with no leakage; metrics library unit-tested</td>
+  <td>Tahmid + Hasnayen</td>
+</tr>
+<tr>
+  <td><strong>P6</strong><br>Model development</td>
+  <td>D30–D42</td>
+  <td>RF, XGBoost, LightGBM; LSTM, GRU; the HSIF-style fusion reimplementation; the regime router; hyperparameter search with a fixed budget; multi-seed protocol</td>
+  <td>Every model in the ladder trains, predicts and logs to the experiment registry; 5-seed mean ± sd available for the top 3 configurations per model</td>
+  <td>Tahmid</td>
+</tr>
+<tr>
+  <td><strong>P7</strong><br>Contagion &amp; regime</td>
+  <td>D36–D48</td>
+  <td>Lead–lag estimation (train-window only, Newey–West); cross-asset feature construction; tier attenuation test; contagion graph; D1 vs D2 regime detectors; routing model</td>
+  <td>The lead–lag matrix and the contagion graph exist as artefacts; the H3 nested comparison runs; the tier-attenuation test has a reported result</td>
+  <td>Md. Abdullah + Tahmid</td>
+</tr>
+<tr>
+  <td><strong>P8</strong><br>Evaluation</td>
+  <td>D43–D54</td>
+  <td>Full matrix: 9 models × 3 feature sets × 3 validation schemes × 3 tiers; DM tests; Benjamini–Hochberg correction; bootstrap CIs; ablation (drop each feature family); regime decomposition</td>
+  <td>Every table in §6.8 is generated from the registry, not copied by hand; all significance tests report raw and adjusted p-values</td>
+  <td>Tahmid + Md. Abdullah</td>
+</tr>
+<tr>
+  <td><strong>P9</strong><br>Backtest</td>
+  <td>D48–D56</td>
+  <td>Cost-aware simulator; long/flat and long/short; cost sensitivity sweep; buy-and-hold benchmark; Sharpe/Sortino/MaxDD/CER; turnover</td>
+  <td>Every model has an equity curve at 4 cost levels vs buy-and-hold; the CER formula is documented and reproducible</td>
+  <td>Tahmid</td>
+</tr>
+<tr>
+  <td><strong>P10</strong><br>System &amp; dashboard</td>
+  <td>D20–D58</td>
+  <td>FastAPI service; model registry loader; all dashboard pages; the tier/regime and contagion pages in full; Docker Compose; documentation set</td>
+  <td><code>docker compose up</code> brings up api + dashboard; every chart links to a run ID; all Part VII documents exist and are current</td>
+  <td>Hasnayen + Tahmid</td>
+</tr>
+<tr>
+  <td><strong>P11</strong><br>Thesis &amp; defence</td>
+  <td>D50–D64</td>
+  <td>Chapter writing; figures and tables; model cards; data cards; the reproducibility appendix; supervisor reviews at D50 and D58; final submission checklist</td>
+  <td>All 12 chapters written; every claim traced to a registry entry; <code>make all</code> reproduces every reported number from a clean clone</td>
+  <td>All</td>
+</tr>
+</table>
+<p class="caption">Table 5.2 — Phase plan. Overlaps are deliberate: the dashboard is built from P10 onward in parallel with the research so that findings are visualised as they emerge rather than reconstructed at the end.</p>
+
+<div class="box">
+<h4>The critical path, and the three places it can break</h4>
+<p><strong>Critical path:</strong> P1 (data) → P3/P4 (features + sentiment) → P5 (splits) → P6 (models) → P8 (evaluation) → P9 (backtest) → P11 (thesis).</p>
+<p><strong>Break #1 — P4 slips.</strong> The sentiment engine is the longest-lead item and the only module with a genuine external dependency (the lexicon quality). If the lexicon is not ready by D22, everything downstream compresses. <strong>Mitigation:</strong> build the Loughran–McDonald baseline arm and the CDW pipeline first, with a placeholder lexicon, so the machinery is complete and tested; refine the crypto lexicon in parallel with the model work.</p>
+<p><strong>Break #2 — the data volume is smaller than expected.</strong> If RSS feeds only retain 90 days of history, the sentiment panel is 90 days and the entire sentiment analysis is underpowered. <strong>Mitigation:</strong> verify feed history depth in P1 (D4–D6), before committing to the design. If history is shallow, pivot the sentiment panel to a <em>rolling-window, cross-sectional</em> design — more assets over fewer days rather than fewer assets over many days — and restate the power analysis in the thesis. <strong>This check must happen in the first week.</strong></p>
+<p><strong>Break #3 — P6 overruns.</strong> Nine models × 5 seeds × hyperparameter search on CPU is genuinely expensive. <strong>Mitigation:</strong> run the search on a reduced feature set first, fix the search budget, and use a single GPU instance for the deep models. If GPU access is unavailable, drop GRU and M6 to a single seed and say so explicitly in the results section rather than reporting a weaker comparison silently.</p>
+</div>
+
+<h2 id="p5-3">5.3 Milestone gates</h2>
+
+<table>
+<tr><th style="width:9%">Gate</th><th style="width:9%">Day</th><th style="width:30%">Must be true to pass</th><th>Consequence of failure</th></tr>
+<tr><td><strong>G1</strong></td><td>D14</td><td>Raw data present for ≥ 12 assets covering ≥ 3 years; tiers assigned; feed-history depth verified; sentiment panel feasibility confirmed</td><td>Redesign the panel structure. This is the last cheap moment to change the design.</td></tr>
+<tr><td><strong>G2</strong></td><td>D28</td><td>Feature store written; <strong>causality test passes</strong>; sentiment engine validated (κ and benchmark reported); baselines running out-of-sample</td><td>Stop model development. No model is trained on an unvalidated feature store.</td></tr>
+<tr><td><strong>G3</strong></td><td>D42</td><td>All 9 models train and log; seeds fixed; feature-set ablation runnable; the HSIF reimplementation reproduces approximately</td><td>Descope M5 (GRU) and possibly M6. Do not descope M2 (XGBoost) or the baselines.</td></tr>
+<tr><td><strong>G4</strong></td><td>D48</td><td>Contagion lead–lag matrix computed; H2 and H3 have reported results (positive or negative)</td><td>If the contagion analysis has no signal, pivot the framing to "no cross-asset sentiment spillover beyond the BTC→ETH case" — a null result with a well-powered test is publishable.</td></tr>
+<tr><td><strong>G5</strong></td><td>D54</td><td>Full evaluation matrix complete; all tables generated from the registry; significance tests adjusted</td><td>Report a reduced matrix. Reporting fewer results honestly beats reporting more results unreliably.</td></tr>
+<tr><td><strong>G6</strong></td><td>D58</td><td>Docker stack runs; dashboard complete with every chart linked to a run; all Part VII documentation present</td><td>Cut dashboard scope to the three highest-value pages. The thesis chapters matter more than the dashboard pages.</td></tr>
+<tr><td><strong>G7</strong></td><td>D64</td><td><code>make all</code> reproduces every reported number from a clean clone; submission checklist complete</td><td>No submission. A non-reproducible result is not a result.</td></tr>
+</table>
+<p class="caption">Table 5.3 — Milestone gates. Each gate is a go/no-go with a named consequence, so a slip triggers a decision rather than a drift.</p>
+
+<h2 id="p5-4">5.4 Weekly operating rhythm</h2>
+
+<table class="tight">
+<tr><th style="width:14%">Day</th><th style="width:26%">Activity</th><th>Detail</th></tr>
+<tr><td>Mon</td><td>Pipeline run + issue triage</td><td>Monday's scheduled run completes by 09:00. Failed sources triaged; issues assigned at the stand-up.</td></tr>
+<tr><td>Tue</td><td>Feature/model development</td><td>Deep work on the current phase's deliverables.</td></tr>
+<tr><td>Wed</td><td>Feature/model development</td><td>Deep work. Mid-week code review by the reviewer of each module.</td></tr>
+<tr><td>Thu</td><td>Analysis + documentation</td><td>Experiment analysis, figure generation, documentation updates. Documentation is scheduled work, not leftover work.</td></tr>
+<tr><td>Fri</td><td>Demo + retrospective</td><td>30-minute live demo of the week's work; 15-minute retrospective; update the Gantt chart and the risk register.</td></tr>
+<tr><td>Sat</td><td>Supervisor review (fortnightly)</td><td>Progress against the plan; blockers escalated. Week 1, 3, 5, 7, 9 — aligned to G1–G7.</td></tr>
+</table>
+
+<h3>Supervisor review pack (fortnightly, 6 pages)</h3>
+<ol>
+  <li>Progress against the current phase's exit criterion — with the artefact, not a claim.</li>
+  <li>The week's key result: one table or one figure with a sentence of interpretation.</li>
+  <li>Any negative finding, stated plainly. <strong>Bring bad news to the review early</strong> — a negative result discovered at D50 is a research finding; a negative result discovered at D62 is a crisis.</li>
+  <li>Blockers, with the specific decision needed from the supervisor.</li>
+  <li>Next fortnight's exit criterion.</li>
+  <li>Updated risk register.</li>
+</ol>
+
+<h2 id="p5-5">5.5 Common failure modes</h2>
+
+<table>
+<tr><th style="width:26%">Failure mode</th><th style="width:11%">Likelihood</th><th style="width:11%">Impact</th><th>Prevention</th></tr>
+<tr><td><strong>Leakage inflates results</strong> — centred windows, full-sample scalers, lead–lag estimated on the full dataset</td><td>High</td><td><span class="tag t-red">Fatal</span></td><td>The causality test, written before the first model. Never fit a transform outside the training fold. Review the feature code specifically for <code>shift(−</code> and centred windows.</td></tr>
+<tr><td><strong>RSS history too shallow</strong></td><td>Medium</td><td><span class="tag t-red">Fatal</span></td><td>Verify in D4–D6. Keep a cross-sectional design ready as the fallback.</td></tr>
+<tr><td><strong>Sentiment lexicon is poor</strong> — κ below 0.4, or the benchmark shows crypto-specific terms degrading general financial sentiment</td><td>Medium</td><td><span class="tag t-amb">High</span></td><td>Build the Loughran–McDonald arm first so there is always a working sentiment measure. Iterate the crypto lexicon with double-labelled samples.</td></tr>
+<tr><td><strong>Class imbalance inflates accuracy</strong> — headline accuracy near 55% presented as strong</td><td>High</td><td><span class="tag t-amb">High</span></td><td>Always report balanced accuracy and MCC alongside accuracy. Set a threshold on validation by F1 maximisation.</td></tr>
+<tr><td><strong>T3 assets contribute nothing</strong> — insufficient history, so the high-risk tier is empty</td><td>High</td><td><span class="tag t-amb">High</span></td><td>Enforce <code>min_history_days</code>; use variable-length sequences or per-tier lookbacks; monitor per-asset sample counts in the coverage report.</td></tr>
+<tr><td><strong>API rate limits / outages</strong></td><td>High</td><td><span class="tag t-amb">Medium</span></td><td>Rate limiter, circuit breaker, retries with backoff, cached raw responses, graceful degradation, a freshness panel.</td></tr>
+<tr><td><strong>Scope creep into a new architecture</strong></td><td>Medium</td><td><span class="tag t-red">Fatal</span></td><td>The contribution list in §2.4 is the scope. New ideas go in a "Future Work" section, not into the implementation.</td></tr>
+<tr><td><strong>Writing starts too late</strong></td><td>High</td><td><span class="tag t-amb">High</span></td><td>Write the methodology chapter <em>as</em> the work happens (Thursday slot). Draft the results chapter from the registry, not from memory.</td></tr>
+<tr><td><strong>Three people, one bottleneck</strong></td><td>Medium</td><td><span class="tag t-amb">High</span></td><td>Weekly cross-review rotation. Each member must be able to run the others' workstreams.</td></tr>
+<tr><td><strong>Undocumented decisions</strong> — a design choice is made in a meeting and never recorded, so it cannot be justified later</td><td>High</td><td><span class="tag t-amb">Medium</span></td><td>Every non-obvious decision becomes an ADR within 48 hours (Part VII §7.3).</td></tr>
+</table>
+<p class="caption">Table 5.4 — Risk register for the execution phase. The full project risk register, including technical and ethical risks, is in Part VIII §8.3.</p>

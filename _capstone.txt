@@ -1,0 +1,940 @@
+    CAPSTONE PROJECT PROPOSAL SPRING 2026
+
+Cryptocurrency Price Prediction Using LSTM and
+                News Sentiment Analysis.
+
+                         Submitted by
+
+                                           Hasnayen Jawad
+                                        ID: 0822310105101011
+
+                                             Md. Abdullah
+                                        ID: 0822310105101038
+                                        Tahmid Khan Mojlish
+                                        ID: 0822310105101055
+
+                        Supervised by
+
+                                   Khandakar Md. Shafin
+                             Lecturer, Dept. of CSE, BAIUST
+
+                   in partial fulfillment of the requirements for the degree of
+                   Bachelor of Science in Computer Science and Engineering
+
+          DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING
+  BANGLADESH ARMY INTERNATIONAL UNIVERSITY OF SCIENCE AND
+
+                                    TECHNOLOGY (BAIUST)
+DECLARATION
+
+We hereby declare that the work presented in this Capstone Project Proposal is the result of
+our own investigation and efforts, conducted under the guidance and supervision of
+Khandakar Md. Shafin, Lecturer, Department of Computer Science and Engineering,
+Bangladesh Army International University of Science and Technology (BAIUST), Cumilla,
+Bangladesh. We confirm that no part of this proposal has been submitted, nor is being
+submitted, for the award of any other degree or diploma at any institution.
+
+Countersigned                   Signature
+
+------------------------------  ------------------------
+                                Hasnayen Jawad
+(Khandakar Md. Shafin)          ID: 0822310105101011
+
+Supervisor                      ------------------------
+                                Md. Abdullah
+                                ID: 0822310105101038
+
+                                ------------------------
+
+                                Tahmid  Khan              Mojlish
+
+                                ID: 0822310105101055
+APPROVAL
+
+The Capstone Project titled "Cryptocurrency Price Prediction Using LSTM and News
+Sentiment Analysis," submitted by Hasnayen Jawad (0822310105101011), Md. Abdullah
+(0822310105101038) and Tahmid Khan Mojlish ( 0822310105101055) to the Department of
+Computer Science and Engineering, Bangladesh Army International University of Science
+and Technology (BAIUST), has been reviewed and approved as satisfactory for partial
+fulfillment of the requirements for the degree of Bachelor of Science in Computer Science
+and Engineering.
+
+Board of Examiners
+
+----------------------------------------                Supervisor
+Khandakar Md. Shafin
+Lecturer
+Department of Computer Science and Engineering, BAIUST
+
+----------------------------------------                Examiner 1
+(Examiner Name and Signature)
+
+Department of Computer Science and Engineering, BAIUST
+
+----------------------------------------                Examiner 2
+(Examiner Name and Signature)
+
+Department of Computer Science and Engineering, BAIUST
+
+----------------------------------------                Examiner 3
+(Examiner Name and Signature)
+
+Department of Computer Science and Engineering, BAIUST
+   TABLE OF CONTENTS                                                    Page No.
+
+Title                                                                   1
+
+Project/Research Title :                                                1
+Cryptocurrency Price Prediction Using LSTM and News Sentiment Analysis  1
+Introduction                                                            2
+Project/Research Motivation
+Problem Statement                                                       17
+
+REFERENCES
+
+Table of Contents:
+
+1. Introduction .......................................................................................... 1
+
+2. Project/Research Motivation ...................................................................... 1
+
+3. Problem Statement .................................................................................. 2
+
+4. Project/Research Objectives ........................................................................ 3
+
+5. Related Work / Literature Review ................................................................ 4
+
+6. Research Questions .................................................................................. 5
+
+7. Methodology / Design Approach ..........................................................(5 - 12)
+
+7.1 Research-Based Experimental Design                                            5
+
+7.2 System Features                                                               6
+
+7.3 Functional Requirements                                                       6
+
+7.4 Non-Functional Requirements                                                   7
+
+7.5 System Architecture                                                           7
+
+7.6 System Design Process                                                         8
+
+7.7 Professional Engineering Practices                                            8
+
+7.8 Modern Tools and Technologies                                                 8
+
+7.9 Testing and Quality Assurance                                                 9
+
+7.10 Deployment and Implementation Plan                                           9
+7.11 Research /Model / Experimental Design (block diagram)  10
+
+8. Project Timeline (Gantt Chart) .................................................................. 13
+
+9. Modern Tools & Technologies .................................................................... 14
+
+10. Ethical Considerations ....................................................................(15 - 16)
+
+10.1 Key Ethical Considerations                             15
+
+10.2 Demonstration of Ethical Awareness                     16
+
+10.3 Commitment to Responsible Research Practices           16
+
+11. Conclusion                                                                                            16
+
+References                                                  17
+Acronym        Abbreviation
+LTSM
+OHCLV    Full form / Meaning
+RMSE     Long Short Term Memory
+MAE      Open, High, Low, Close, and Volume
+NLP      Root Mean Square Error
+SMAPE    Mean Absolute Error
+CER      Natural Language Processing
+         Symmetric Mean Absolute Percentage Error
+VADER    Certainty Equivalent Return
+FRED
+SHAP     Valence Aware Dictionary and Sentiment Reasoners
+API      Federal Reserve Economic Data
+DSTAT    Shapley Additive Explanation
+BTC      Application Programming Interface
+ETH      A linux command line tool
+NLTK     Bitcoin
+         Etherium
+         Natural Language Toolkit
+1. Introduction:
+
+Cryptocurrency is digital money that isn't controlled by any bank or government. It exists
+only online and uses cryptography (secure coding) to keep transactions safe. This means no
+single company or authority decides how it's managed, giving users more control over their
+own money compared to traditional banking systems.
+
+Instead of a bank keeping track of who owns what, a public, shared record called a blockchain
+does that job, verified by many computers around the world. This network of computers
+works together to confirm transactions, making it very difficult to fake or alter records once
+they're added. Bitcoin was the first and most famous example, introduced in 2009, but there
+are thousands of others now, such as Ethereum and Litecoin, each designed for different
+purposes like payments, smart contracts, or app development.
+
+People use crypto to send money across borders quickly, invest for potential profit, or build
+apps like games and decentralized platforms that don't rely on a central company. However,
+its value can rise and fall a lot within a short time, making it a risky investment for beginners.
+Also, if you lose access to your account or forget your private key, there's usually no way to
+recover it, unlike a bank account with password reset options, so users must be extra careful
+in managing their crypto wallets.
+
+2. Research Motivation
+
+    1. Volatility problem - Crypto currency prices change rapidly and unpredictably,
+         making them harder to forecast than traditional assets like stocks. This creates a need
+         for smarter prediction methods.
+
+    2. Limits of traditional models - Older prediction methods (like linear regression) can't
+         handle the complex, non-linear ups and downs in crypto prices. LSTM, a deep
+         learning model, is better suited for this kind of time-series data.
+
+    3. Impact of news and sentiment - Crypto prices often react strongly to news, tweets,
+         or public opinion. Ignoring this sentiment data means missing a big part of what
+         actually drives price changes.
+
+    4. Practical value - A more reliable prediction model can help investors and traders
+         make smarter decisions in a market known for sudden crashes and spikes.
+
+    5. Academic relevance - As a CSE student, this project lets us apply real skills in
+         machine learning, deep learning (LSTM), and natural language processing (sentiment
+         analysis) to a current, real-world problem.
+
+                                                                                                        1 | Page
+3. Problem Statement
+
+Specific Issues:
+     Sentiment analysis relies only on low-frequency, passive proxies (weekly Google
+         Trends) and missing real-time social media and news sentiment
+
+     Macroeconomic and geopolitical factors (interest rates, inflation, gold prices) are
+         excluded from blockchain-fundamentals-based models
+
+     Prediction models use structured price/volume (OHLCV) data only, ignoring
+         unstructured text-based sentiment signals
+
+     No cross-asset contagion or systemic risk modeling exists, as cryptocurrencies are
+         treated independently
+
+     Frequency-decomposition methods oversimplify price dynamics into only two
+         (high/low) groups
+
+     networks are validated on a single cryptocurrency (ADA), limiting generalizability
+
+Solution Statement:
+
+The proposed framework collects real-time sentiment data from social media (X/Twitter,
+Reddit) and crypto news portals via their APIs, and applies AI/NLP-based sentiment analysis
+to generate a high-frequency sentiment score. This sentiment score, combined with historical
+price data and macro-financial factors, will feed into a machine learning-based model to
+predict cryptocurrency price movements improving accuracy and responsiveness over
+existing low-frequency, isolated-data approaches.
+
+4. Research Objectives
+
+              To collect and preprocess historical cryptocurrency price data for training.
+              To build an LSTM model that predicts future cryptocurrency prices based on
+
+                  past price patterns.
+              To train and test the LSTM model using historical data to check its prediction
+
+                  accuracy
+              To evaluate the model's performance using metrics like RMSE (Root Mean
+
+                  Square Error) or MAE (Mean Absolute Error).
+              To compare the LSTM model's results with simpler methods (like moving
+
+                  averages) to see if it performs better.
+
+Primary Objective:
+The primary objective of this research is to predict cryptocurrency prices accurately using an
+LSTM (Long Short-Term Memory) model. This involves designing and building an LSTM
+model suited for time-series price prediction, and training the model using historical price
+data to learn underlying patterns and trends.
+
+Secondary Objectives:
+
+         To support the primary objective, this research also involves collecting and
+         preprocessing historical cryptocurrency price data for training and testing purposes.
+
+                                                                                                        2 | Page
+         The model's prediction accuracy is then evaluated using metrics such as RMSE (Root
+         Mean Square Error) or MAE (Mean Absolute Error), and its performance is compared
+         with simpler prediction methods like moving averages to demonstrate its effectiveness.
+
+5. Literature Review
+
+Cryptocurrency price prediction has become an active research area, with studies focusing on
+blockchain fundamentals, investor sentiment, deep learning, and decomposition-based
+forecasting. However, these approaches remain fragmented and often address only specific
+aspects of the prediction problem.
+
+Serial Study                     Key contribution      Limitation
+
+1  Guidolin & Ionta (2026)       Blockchain            Weekly sentiment
+                                 fundamentals and      only -- no real-time
+                                 Google Trends         social/news data.
+                                 sentiment across 40
+                                 cryptocurrencies.
+
+2  Luo & Yin - CryptoForecastCF  Explainable deep      Uses OHLCV only;
+                                 learning (N-BEATS,    excludes sentiment
+                                 WaveNet, Seq2Seq,     & cross-asset links
+                                 GRU).
+
+3  Zhang et al. (2026)           Sliding EMD           Single asset; only
+                                 framework with        two frequency
+                                 macro variables for   groups
+                                 ADA prediction.
+
+4  Hajek et al. (2023)           Investor sentiment +  Limited to Bitcoin;
+                                 ensemble ML           simpler sentiment
+                                 improves Bitcoin      sources
+                                 prediction.
+
+5  Amirshahi & Lahmiri (2025)    CNN-LSTM              No integrated
+                                 captures nonlinear    sentiment analysis
+                                 market behavior.
+
+Other studies have further emphasized the importance of macroeconomic and market-wide
+factors. Corbet et al. (2020) found that cryptocurrency markets respond to monetary policy
+changes, while Aharon et al. (2021) and Bouri et al. (2021) reported strong relationships
+between exchange rates, market contagion, and cryptocurrency returns. Hajek et al. (2023)
+also showed that combining investor sentiment with ensemble machine learning improves
+Bitcoin price prediction.
+
+Despite these advances, no existing study integrates blockchain fundamentals, high-frequency
+multi-source sentiment, macroeconomic indicators, and advanced forecasting techniques
+within a single unified framework. This research aims to address this gap by combining
+AI/NLP-based sentiment analysis with blockchain and macro-financial variables to improve
+cryptocurrency price prediction and portfolio performance.
+
+                                                                                                        3 | Page
+Research Gap:
+Existing studies address sentiment, blockchain fundamentals, interpretability, or frequency
+decomposition largely in isolation. Guidolin and Ionta (2026) rely on low-frequency
+sentiment and omit macroeconomic factors; Luo and Yin's framework ignores unstructured
+sentiment and contagion effects; and Zhang et al. (2026) apply only a two-group frequency
+split validated on a single asset. This project addresses these gaps by integrating real-time,
+AI/NLP-derived sentiment (from social media and news APIs) with macro-financial variables
+within a machine learning-based prediction framework, aiming to improve both forecasting
+accuracy and generalizability across cryptocurrencies.
+
+6. Research Questions:                              Short-Term  Memory)  model  predict
+RQ1. How accurately can an LSTM (Long
+cryptocurrency prices using historical price data?
+
+RQ2. Does incorporating news sentiment analysis improve the accuracy of cryptocurrency
+price predictions compared to using historical price data alone?
+
+RQ3. What is the relationship between public sentiment (from news/social media) and
+cryptocurrency price movements?
+
+RQ4. How does a combined model (LSTM + sentiment analysis) perform compared to a
+model using only price data, in terms of accuracy and reliability?
+
+7. Development Methodology
+7.1 Research-Based Experimental Design with Iterative Refinement.
+
+Phase                    Description
+                         Reviewed existing research (Guidolin & Ionta, 2026; Luo & Yin;
+1. Literature Review &   Zhang et al., 2026) to identify gaps in sentiment frequency, factor
+Requirement Gathering    integration, and decomposition methods.
+                         Collected price/volume (OHLCV) data, social media & news
+2. Data Collection &     sentiment (via APIs), and macro-financial data; designed the data
+System Design            pipeline and model architecture blueprint.
+                         Developed sentiment analysis (NLP-based) and price prediction
+3. Model Development &   models (ML/Deep Learning) using Python, TensorFlow/Keras, and
+Implementation           Scikit-learn.
+                         Performed out-of-sample, walk-forward validation; evaluated using
+4. Testing & Validation  RMSE, MAE, SMAPE, Sharpe ratio, and CER metrics.
+                         Integrated final model outputs into a dashboard/visualization for
+5. Deployment / Result   prediction results and sentiment trends.
+Integration              Hyperparameter tuning, model comparison, and error analysis to
+6. Refinement &          improve prediction accuracy.
+Optimization             Technical manuals, user guides, and project evaluation reports.
+7. Documentation
+
+7.2 System Features
+
+Data Collection Module
+
+                                                                                4 | Page
+ Real-time price/volume (OHLCV) data collection from crypto exchanges (Binance,
+    CoinMarketCap)
+
+ Social media sentiment data collection via X/Twitter and Reddit APIs
+ News sentiment data collection via crypto news portal APIs
+ Macroeconomic data collection (interest rates, inflation, gold prices) from sources like
+
+    FRED
+
+Sentiment Analysis Module
+
+     NLP/AI-based sentiment scoring of collected text data
+     Daily/intraday sentiment index generation
+     Sentiment trend visualization over time
+Prediction Module
+     Machine learning/deep learning-based price movement prediction
+     Integration of sentiment scores with price and macro-financial features
+     Model retraining and rolling-window forecasting
+Analytics & Reporting Module
+
+ Prediction accuracy reports (RMSE, MAE, SMAPE)
+ Comparison dashboard: proposed model vs. baseline (weekly sentiment) model
+ Historical performance tracking (Sharpe ratio, CER)
+
+Visualization/Dashboard Module
+
+ Real-time sentiment and price trend charts
+ Prediction result display (predicted vs. actual price movement)
+ Alerts for significant sentiment shifts or predicted volatility
+
+7.3 Functional Requirements      Description
+    ID Requirement               Automatically collect price/volume (OHLCV),
+    FR1 Data Ingestion           sentiment (social media/news), and macroeconomic
+                                 data via APIs.
+    FR2 Sentiment Scoring        Apply NLP-based sentiment analysis to generate
+                                 daily/intraday sentiment scores from collected text
+    FR3 Data Preprocessing       data.
+    FR4 Price Prediction         Clean, normalize, and align sentiment, price, and
+                                 macro data on a consistent time frequency.
+    FR5 Model Evaluation         Generate machine learning/deep learning-based
+    FR6 Baseline Comparison      predictions of cryptocurrency price movement or
+    FR7 Reporting/Visualization  direction.
+                                 Compute and display prediction accuracy metrics
+                                 (RMSE, MAE, SMAPE, DSTAT).
+                                 Compare proposed model's performance against
+                                 baseline (e.g., weekly Google Trends-only) models.
+                                 Generate charts and reports showing sentiment
+
+                                                                              5 | Page
+FR8 Alert/Notification           trends, predicted vs. actual price movement.  high-
+                                 Notify significant sentiment shifts or
+                                 confidence prediction signals.
+
+7.4 Non-Functional Requirements
+
+Category                 Requirement
+Performance              Process daily/intraday data updates with prediction latency under
+Security                 a few seconds per cryptocurrency.
+Usability                Secure API key storage and encrypted data handling for third-
+Scalability              party API access (social media/news/exchange APIs).
+Reliability              Clear, interpretable dashboard/visualization for sentiment trends
+Compatibility            and prediction results.
+                         Ability to extend the framework to additional cryptocurrencies
+                         without major architectural change.
+                         Consistent data pipeline uptime to avoid gaps in sentiment/price
+                         data collection.
+                         Compatible with standard data science environments (Python-
+                         based, cloud or local execution).
+
+7.5 System Architecture
+Layers:
+
+1. Data Collection Layer: Yahoo Finance, Binance API (price/volume data);
+    CryptoPanic API or NewsAPI (crypto news sentiment); social media APIs (X/Twitter,
+    Reddit) - gathers raw price and sentiment input data.
+
+2. Processing Layer: Python, Pandas, NumPy - Data cleaning, normalization, and
+    feature engineering.
+
+3. Sentiment Analysis Layer: NLTK, VADER, Transformers - NLP-based sentiment
+    scoring of collected text data.
+
+4. Modeling Layer: Scikit-learn (ML models), TensorFlow/Keras (deep learning
+    models) - Price prediction using sentiment, price, and macro features.
+
+5. Visualization Layer: Matplotlib, Plotly - Sentiment trend charts, prediction vs. actual
+    price comparison, model performance dashboards.
+
+7.6 System Design Process
+
+ Data Flow Diagram (DFD):        
+                                                          
+
+                                  
+
+ Model Architecture Diagram: Depicts input features (sentiment scores,
+    price/volume, macro variables), model layers, and output (predicted price/direction).
+
+ Design Principles: Modularity (separate sentiment, price, and macro pipelines),
+    reproducibility (fixed random seeds, version-controlled notebooks), scalability
+    (extendable to additional cryptocurrencies).
+
+                                                                                                   6 | Page
+     Development Environment: Jupyter Notebook for prototyping and iterative
+         experimentation; GitHub for version control.
+
+7.7 Professional Engineering Practices
+
+     Git/GitHub version control -- track code changes, model versions, and experiment
+         history
+
+     Reproducible research practices -- fixed random seeds, documented preprocessing
+         steps, saved model checkpoints
+
+     Peer/supervisor review -- periodic review of methodology, code, and results for
+         correctness
+
+     Ethical and compliant API usage -- respecting rate limits and terms of service of
+         social media, news, and exchange APIs; no scraping of restricted/private data
+
+     Standard coding practices -- clean, modular Python code (PEP8 style), clear inline
+         documentation and comments
+
+     Data integrity practices -- avoiding data leakage (e.g., using only past information
+         in rolling/walk-forward validation)
+
+7.8 Modern Tools and Technologies
+
+Category           Tool/Technology            Purpose
+Programming        Python                     Core language for data
+                                              processing and modeling
+Data Analysis      Pandas, NumPy              Data cleaning, transformation,
+                                              feature engineering
+Visualization      Matplotlib, Plotly         Sentiment trend charts,
+                                              prediction result plots
+Machine Learning Scikit-learn                 Traditional ML models (RF,
+                                              SVR, XGBoost)
+Deep Learning      TensorFlow/Keras           LSTM/GRU-based sequential
+                                              prediction models
+NLP/Sentiment      NLTK,           VADER,     Sentiment scoring from text
+Analysis           Transformers    Finance,   (social media/news)
+Price Data Source  Yahoo                      Historical and real-time
+                   Binance API          API,  cryptocurrency price data
+News/Sentiment
+Source             CryptoPanic                Crypto-related news for
+                   NewsAPI                    sentiment extraction
+
+Version Control    Git, GitHub                Code and experiment version
+                                              tracking
+
+Development        Jupyter Notebook           Interactive prototyping and
+Environment                                   analysis
+
+                                              7 | Page
+7.9 Testing and Quality Assurance
+
+Test Type                 Purpose                     Test Type
+
+Data Validation Testing   Verify completeness and Pandas assertions, manual
+                          correctness of collected checks
+                          price/sentiment/macro data
+
+Unit Testing              Validate individual functions Python unittest/pytest
+                          (data cleaning, sentiment
+                          scoring, feature engineering)
+
+Model Validation Testing  Ensure model trains and Scikit-learn/TensorFlow
+                          predicts without errors on validation splits
+                          sample data
+
+Out-of-Sample Testing     Evaluate model performance Walk-forward/rolling
+                          on unseen, chronologically window validation
+                          later data
+
+Performance Testing       Assess prediction accuracy RMSE, MAE, SMAPE,
+                          and computational efficiency runtime benchmarking
+
+Robustness Testing        Confirm model generalizes   Cross-asset testing       (BTC,
+                                                      ETH, ADA, etc.)
+                          across            multiple
+
+                          cryptocurrencies
+
+7.10 Deployment and Implementation Plan
+
+     Hosting/Execution: Local or cloud-based execution (Google Colab / Jupyter
+         Notebook); no production-grade server hosting required, as this is a research/model
+         validation project rather than a live user-facing application
+
+     Environment Management: Python virtual environment (venv/conda) with version-
+         pinned dependencies (requirements.txt) for reproducibility
+
+     Data Backup: Periodic backup of collected datasets (price, sentiment, macro data)
+         and trained model checkpoints to cloud storage (Google Drive/GitHub)
+
+ Release Plan:                                                        
+                                            
+
+     7.11 Experimental Design (block diagram)
+
+This research adopts a data-driven, experimental design combining sentiment data collection,
+macro-financial factor integration, and machine learning-based model development to predict
+cryptocurrency price movements. The study uses quantitative methods -- predictive
+
+                                                                                8 | Page
+modeling, out-of-sample forecasting, and statistical performance evaluation -- to validate the
+proposed framework against existing sentiment-and-fundamentals-based approaches.
+
+                             Fig (1) : Experimental Design Block Diagram
+Methodology Steps in Details
+
+    1. Problem Definition & Research Questions
+
+                                                                          9 | Page
+          Define the core research problem: the lag and incompleteness of existing
+             sentiment-and-fundamentals-based crypto prediction models
+
+          Formulate research questions guiding the design of the sentiment collection
+             pipeline, factor integration, and predictive model
+
+          Ensure alignment between the identified gaps (weekly-only sentiment, missing
+             macro factors, single-asset validation) and the proposed ML-based solution
+
+2. Data Collection & Preprocessing
+
+    Data Sources: Cryptocurrency price/volume (OHLCV) data via Yahoo Finance and
+    Binance API; sentiment data from social media (X/Twitter, Reddit) and crypto news
+    portals via CryptoPanic API or NewsAPI; macroeconomic data (interest rates,
+    inflation, gold prices) from sources such as FRED
+
+      Preprocessing Steps:
+
+          Data cleaning: handle missing values, remove duplicate/erroneous entries
+          Sentiment scoring: apply NLP-based sentiment analysis (NLTK, VADER, or
+
+             Transformer-based models) to generate daily/intraday sentiment scores
+          Feature selection: select relevant price, sentiment, and macro features
+          Normalization/standardization: scale numeric features (Min-Max or Z-score
+
+             normalization)
+          Data splitting: partition into training (70%), validation (15%), and test (15%)
+
+             sets, preserving chronological order to prevent data leakage
+
+3. Model/Methodology Development
+
+          Develop multiple predictive models to evaluate performance and robustness:
+          Machine Learning Models: Random Forest, Gradient Boosting, XGBoost,
+
+             Support Vector Regression (via Scikit-learn)
+          Deep Learning Models: LSTM, GRU-based architectures for sequential
+
+             sentiment-price data (via TensorFlow/Keras)
+          Implement hyperparameter tuning via grid search or Bayesian optimization
+          Employ walk-forward (rolling window) cross-validation to preserve temporal
+
+             order and prevent look-ahead bias
+
+4. Experimental Setup & Evaluation
+
+          Implement models in Python using TensorFlow/Keras, Scikit-learn, and
+             Pandas/NumPy
+
+          Evaluate using metrics such as:
+          RMSE, MAE, SMAPE for prediction accuracy
+          Directional Accuracy (DSTAT) for trend prediction
+          Sharpe ratio, CER (Certainty Equivalent Return) for investment/economic
+
+             performance
+          Compare performance against baseline models (e.g., weekly Google Trends-
+
+             only sentiment model, non-decomposed univariate model)
+          Conduct statistical significance tests (e.g., Diebold-Mariano test) to validate
+
+             improvements
+
+                                                                                                  10 | Page
+    5. System/Prototype Integration
+              Develop a lightweight analysis pipeline/dashboard integrating:
+              Real-time sentiment collection module (API-based)
+              Price and macro data ingestion module
+              Prediction model generating forecasted price direction/returns
+              Visualization (Matplotlib/Plotly) for sentiment trends and prediction accuracy
+              Technologies: Python, Jupyter Notebook for prototyping; GitHub for version
+                  control
+
+    6. Testing & Validation
+              Conduct out-of-sample backtesting on historical data to assess real-world
+                  applicability
+              Validate model robustness across multiple cryptocurrencies (large-cap, mid-
+                  cap, PoW/PoS coins)
+              Measure impact on prediction reliability: forecast accuracy improvement,
+                  reduction in sentiment lag, and economic value (CER/Sharpe ratio) compared
+                  to baseline models
+
+    7. Analysis & Interpretation of Results
+              Analyze model performance across different cryptocurrencies and market
+                  conditions (bull/bear phases)
+              Interpret results using Explainable AI (XAI) techniques such as SHAP or
+                  counterfactual explanations to identify which sentiment/macro features drive
+                  predictions
+              Identify limitations (e.g., API rate limits, data availability, model overfitting)
+                  and areas for future improvement
+
+    8. Reporting & Documentation
+              Document methodology, experimental results, and model evaluation clearly
+              Prepare findings for the final research report/thesis, with potential extension
+                  toward conference or journal submission
+
+.
+
+8. Estimated Project Timeline (Gantt Chart)
+
+                                                                                                      11 | Page
+SL. Phase              Duration Start End (Days) Day Day Dependencies
+1. Literature Review
+                       7                      1   7   None
+
+2. Problem Definition & Research Questions 5  8   12  Literature Review
+
+3. Data  Collection
+
+(Price/Sentiment/Macr 10                      13  22  Problem Definition
+
+o APIs)
+
+4. Sentiment Scoring & 10                     18 27 Data Collection (parallel, starts mid-collection)
+       Preprocessing                          28 42 Sentiment Scoring & Preprocessing
+
+5. Model Development (ML/DL) 15
+
+6. Experimental Setup & Evaluation 10         43  52  Model Development
+
+7. Analysis            &7                     53 59 Experimental Setup & Evaluation
+       Interpretation                         55 64 Analysis (parallel, starts during evaluation)
+
+8. Documentation       & 10
+       Final Report
+
+                                              Fig2 : Project Timeline Diagram
+
+Phase Descriptions & Milestones
+    1. Literature Review (Days 1-7): Reviewing existing research on cryptocurrency
+         sentiment analysis, blockchain fundamentals, and decomposition-based prediction
+                                                                                                      12 | Page
+         models (Guidolin & Ionta, 2026; Luo & Yin; Zhang et al., 2026); identifying research
+         gaps.
+
+         Milestone: Literature review completed and gaps finalized.
+
+    2. Problem Definition & Research Questions (Days 8-12): Defining the core research
+         problem, objectives, and specific research questions based on identified gaps.
+
+         Milestone: Problem statement and research questions approved.
+
+    3. Data Collection & Sentiment Preprocessing (Days 13-27): These are performed
+         with overlapping schedules to maximize efficiency. Data collection focuses on
+         gathering price/volume, sentiment, and macroeconomic data via APIs; sentiment
+         preprocessing focuses on NLP-based scoring of collected text data.
+
+         Milestone: Cleaned, sentiment-scored dataset ready for modeling.
+
+    4. Model Development (Days 28-42): Building and training machine learning/deep
+         learning models (Random Forest, XGBoost, LSTM/GRU) that integrate sentiment,
+         price, and macro features.
+
+         Milestone: Trained models ready for evaluation.
+
+    5. Experimental Setup & Evaluation (Days 43-52): Out-of-sample, walk-forward
+         backtesting; computing accuracy metrics (RMSE, MAE, SMAPE) and comparing
+         against baseline models.
+
+         Milestone: Evaluation results validated and benchmarked.
+
+    6. Analysis & Interpretation (Days 53-59): Analyzing model performance across
+         cryptocurrencies, interpreting results using explainability techniques (e.g., SHAP),
+         identifying limitations.
+
+         Milestone: Final results interpreted and documented.
+
+    7. Documentation & Final Report (Days 55-64): Finalizing the research report/thesis,
+         methodology write-up, and results summary (begins while analysis finishes).
+
+         Milestone: Final research report submitted
+
+9. Modern Tools & Technologies
+
+     Programming Languages: Python 3.11
+     Libraries: Scikit-learn, TensorFlow 2.x/Keras, XGBoost, Pandas, NumPy, NLTK,
+
+         VADER, Transformers (Hugging Face)
+     Data Sources/APIs: Yahoo Finance, Binance API (price data); CryptoPanic API or
+
+         NewsAPI (news sentiment); X/Twitter API, Reddit API (social media sentiment);
+         FRED (macroeconomic data)
+     Visualization Tools: Matplotlib, Plotly
+
+                                                                                                      13 | Page
+     Development Environment: Jupyter Notebook, VS Code
+     Version Control: Git, GitHub
+     Testing/Validation: Walk-forward (rolling window) cross-validation, Diebold-
+
+         Mariano statistical test
+     Explainability Tools: SHAP
+
+10. Ethical Considerations
+
+10.1 Key Ethical Considerations
+
+Data Usage & API Compliance - Terms of service and authorized access:
+
+     Collect social media (X/Twitter, Reddit), news, and price data strictly through official,
+         authorized APIs, respecting each platform's rate limits and terms of service.
+
+     Avoid scraping or accessing any private, restricted, or non-public data.
+     Use only publicly available posts/comments for sentiment analysis; do not attempt to
+
+         identify or profile individual users.
+
+Data Privacy - Handling of user-generated content:
+
+     Anonymize or aggregate social media/news text data used for sentiment scoring; do
+         not store or report identifiable usernames, profiles, or personal information.
+
+     Limit data collection to what is necessary for sentiment analysis and price prediction
+         (text content, timestamps, aggregate scores).
+
+     Securely store collected data with access limited to the research team.
+
+Fairness & Bias - Avoiding skewed sentiment or model bias:
+
+     Ensure sentiment analysis models are evaluated for bias across different sources (e.g.,
+         not overly weighted toward a single platform or a small group of highly active
+         accounts).
+
+     Regularly validate that sentiment scores and predictions are not systematically skewed
+         by bot activity, spam, or coordinated posting.
+
+     Test model performance across multiple cryptocurrencies to avoid conclusions biased
+         toward a single asset.
+
+Transparency & Explainability - Model clarity and limitations:
+
+     Clearly document the sentiment scoring methodology, model architecture, features
+         used, and evaluation metrics.
+
+     Disclose the assumptions and limitations of the prediction model (e.g., not a
+         guaranteed financial forecasting tool).
+
+     Make clear that this research is for academic/analytical purposes and not intended as
+         direct financial or investment advice.
+
+Data Security - Safe handling of API keys and datasets:
+
+                                                                                                      14 | Page
+     Store API keys and credentials securely (e.g., environment variables, not hard-coded
+         or publicly shared).
+
+     Maintain secure, access-controlled storage for collected datasets and trained models.
+     Follow responsible disclosure if any data pipeline vulnerability or leakage risk is
+
+         identified.
+
+Accountability - Responsible reporting of results:
+
+     Clearly report both the strengths and limitations of the proposed model, avoiding
+         overstated claims about prediction accuracy or profitability.
+
+     Take responsibility for correcting errors in methodology, data handling, or reported
+         results if identified.
+
+     Comply with academic integrity standards and institutional research ethics guidelines.
+
+10.2 Demonstration of Ethical Awareness
+
+This research involves collecting and analyzing publicly available social media, news, and
+financial market data to build a cryptocurrency sentiment and price prediction framework.
+Ethical considerations include respecting data source terms of service, protecting the privacy
+of individuals whose public posts are used for sentiment analysis, avoiding biased or
+misleading model claims, and being transparent about the limitations of the prediction
+framework -- particularly given the speculative and volatile nature of cryptocurrency markets.
+Given the potential for financial decision-making impact, all project activities will avoid
+presenting results as investment advice and will emphasize the academic/research nature of
+the findings.
+
+10.3 Commitment to Responsible Research Practices
+
+We are committed to conducting this research responsibly by:
+
+     Collecting data only through authorized, terms-compliant APIs
+     Protecting the privacy of individuals in publicly sourced social media/news data
+     Avoiding biased, overstated, or misleading claims about model performance
+     Transparently documenting methodology, data sources, and model limitations
+     Clearly stating that this research is for academic purposes and not financial advice
+     Taking responsibility for the accuracy and integrity of reported results
+
+This ensures the cryptocurrency sentiment and price prediction research is conducted
+transparently, responsibly, and with appropriate academic and ethical rigor.
+
+11. Conclusion
+This research proposes an AI-powered cryptocurrency price prediction framework that
+integrates high-frequency sentiment analysis with macro-financial factors, addressing key
+gaps in existing literature such as low-frequency sentiment proxies and limited
+
+                                                                                                      15 | Page
+macroeconomic integration. Through API-based data collection, NLP-based sentiment
+scoring, and rigorous out-of-sample evaluation, the study aims to improve prediction
+accuracy while maintaining ethical and transparent research practices.
+
+References
+
+1. Guidolin, M., & Ionta, S. (2026). Predictive sorting of cryptocurrencies based on
+    fundamentals and sentiment. Journal of International Financial Markets, Institutions
+    & Money, 107, 102285. https://doi.org/10.1016/j.intfin.2026.102285
+
+2. Luo, X., & Yin, W. (2026). Counterfactual explanation-based cryptocurrency price
+    prediction. Entropy, 28(1), 65. https://doi.org/10.3390/e28010065
+
+3. Zhang, W., Tang, Z., Zhuang, X., Cai, Y., & Dong, B. (2026). Cryptocurrency price
+    prediction using sliding empirical mode decomposition with economic variables: A
+    machine learning approach. Fractal and Fractional, 10(4), 218.
+    https://doi.org/10.3390/fractalfract10040218
+
+4. Liu, Y., & Tsyvinski, A. (2021). Risks and returns of cryptocurrency. Review of
+    Financial Studies, 34(6), 2689-2727. https://doi.org/10.1093/rfs/hhaa113
+
+5. Bhambhwani, S., Delikouras, S., & Korniotis, G. M. (2019). Do fundamentals drive
+    cryptocurrency prices? Centre for Economic Policy Research, Washington, DC.
+    https://hdl.handle.net/1783.1/104765
+
+6. Bhambhwani, S. M., Delikouras, S., & Korniotis, G. M. (2023). Blockchain
+
+characteristics and cryptocurrency returns. Journal of International Financial Markets,
+
+Institutions  &        Money,     86,                                    101788.
+
+https://www.sciencedirect.com/science/article/abs/pii/S1042443123000562
+
+7. Bianchi, D., Guidolin, M., & Pedio, M. (2023). The dynamics of returns predictability
+    in cryptocurrency markets. European Journal of Finance, 29(6), 583-611.
+
+8. The dynamics of returns predictability in cryptocurrency markets
+
+9. Bouri, E., Vo, X. V., & Saeed, T. (2021). Return equicorrelation in the cryptocurrency
+    market: Analysis and determinants. Finance Research Letters, 38, 101497.
+
+     https://doi.org/10.1016/j.frl.2020.101497
+
+10. Hajek, P., Hikkerova, L., & Sahut, J.-M. (2023). How well do investor sentiment and
+
+ensemble learning predict Bitcoin prices? Research in International Business and
+
+Finance, 64, 101836. How well do investor sentiment and ensemble learning predict
+
+Bitcoin       prices?          -       ScienceDirect
+
+Plagiarism and AI-Generated Text Detection Report:
+
+The proposal titled "Cryptocurrency Price Prediction Using LSTM and News Sentiment
+Analysis" was evaluated using the Grammarly Plagiarism Checker and Turnitin's AI-
+Generated Text Detection tool. The Grammarly scan identified a small number of plagiarism
+
+                                                                                                      16 | Page
+matches and writing issues, all of which were reviewed and corrected. The final similarity
+index remained within the department's required limit of 20% or below.
+The document was also verified using Turnitin, which reported an AI-generated content score
+of 8.5%, well below the department's maximum allowable threshold of 10%. This indicates
+that the proposal satisfies the required academic integrity standards. The attached Grammarly
+report is provided as supporting evidence of the verification process.
+
+                                                                                                      17 | Page
+18 | Page
+

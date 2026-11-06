@@ -1,0 +1,316 @@
+<div class="pb"></div>
+<h1 id="pA"><span class="hnum">A</span>Appendix</h1>
+
+<h2 id="pA-1">A. Environment bootstrap and dependency pinning</h2>
+
+<h3>A.1 Bootstrap</h3>
+<pre>
+# 1. Python 3.11 (3.11.x — 3.12+ breaks some pinned C-extension wheels)
+python -m venv .venv
+source .venv/Scripts/activate     # Windows Git Bash
+# source .venv/bin/activate       # Linux / macOS
+
+pip install --upgrade pip wheel setuptools
+pip install -r requirements.txt
+pip install -e ".[dev]"
+
+# 2. Verify
+python -c "import csf; print('package ok')"
+pytest -q
+</pre>
+
+<h3>A.2 Core dependency set</h3>
+<table class="tight">
+<tr><th style="width:18%">Group</th><th style="width:38%">Packages</th><th>Notes</th></tr>
+<tr><td>Core</td><td>pandas, numpy, pyarrow, duckdb, python-dateutil, pytz</td><td>DuckDB replaces a database server — query Parquet directly, no Postgres to deploy</td></tr>
+<tr><td>Data</td><td>requests, httpx, feedparser, yfinance, tenacity</td><td><code>tenacity</code> for retry/backoff; <code>feedparser</code> for RSS</td></tr>
+<tr><td>ML</td><td>scikit-learn, xgboost, lightgbm, shap, joblib</td><td>SHAP for TreeSHAP on XGBoost; KernelSHAP for sequence models</td></tr>
+<tr><td>DL</td><td>tensorflow (CPU or GPU), or torch</td><td>TF matches the HSIF reimplementation's original framework</td></tr>
+<tr><td>NLP</td><td>nltk, vaderSentiment (optional)</td><td>NLTK for lemmatisation and the stopword list; downloader assets fetched once and cached</td></tr>
+<tr><td>Stats</td><td>statsmodels, scipy, arch</td><td><code>statsmodels</code> for the panel regressions with clustered / Driscoll–Kraay errors; <code>arch</code> for volatility estimators</td></tr>
+<tr><td>Serve</td><td>fastapi, uvicorn, pydantic, pydantic-settings</td><td>The API layer</td></tr>
+<tr><td>Dashboard</td><td>streamlit, plotly, pandas</td><td>Streamlit for speed of development; Plotly for interactive charts</td></tr>
+<tr><td>Dev</td><td>pytest, pytest-cov, ruff, mypy, pre-commit, jupyter, docker</td><td>The quality gate</td></tr>
+</table>
+<p class="caption">Table A.1 — Dependency groups. Install as extras so a contributor can pull only what they need: <code>pip install -e ".[ml,serve,dev]"</code>.</p>
+
+<div class="warn">
+<p class="lbl">Two pinning rules</p>
+<p><strong>1. Pin exact versions in <code>requirements.lock</code></strong>, generated with <code>pip freeze</code> and committed. The <code>requirements.txt</code> may use compatible-release ranges; the lockfile is what the reproduction actually uses. Record the lockfile hash in every run manifest.</p>
+<p><strong>2. Expect one genuine dependency conflict</strong> and resolve it deliberately, not by uninstalling until it works: scikit-learn, LightGBM and XGBoost each pin different numpy/scipy upper bounds. The usual resolution is a numpy version that satisfies all three — determine it once, pin it explicitly, and note the constraint in the README so the next person does not spend a day rediscovering it.</p>
+</div>
+
+<h3>A.3 Makefile targets</h3>
+<pre>
+make setup        # venv, deps, pre-commit install, NLTK assets
+make test         # unit + integration + causality tests
+make lint         # ruff + mypy
+make data         # raw ingestion only
+make features     # feature store build
+make train        # train all models, write to the registry
+make evaluate     # full evaluation matrix, write results to the registry
+make report       # regenerate every table and figure from the registry
+make serve        # start the API
+make dashboard    # start Streamlit
+make all          # data → features → train → evaluate → report
+make clean        # remove derived artefacts (never touches data/raw)
+</pre>
+
+<h2 id="pA-2">B. Configuration schema reference</h2>
+
+<table class="tight">
+<tr><th style="width:20%">File</th><th style="width:26%">Key</th><th>Meaning / default</th></tr>
+<tr><td rowspan="4"><code>universe.yaml</code></td><td><code>tiers.T1</code></td><td><code>{min_rank: 1, max_rank: 20, min_age_days: 1460, min_quote_vol: 5e7}</code></td></tr>
+<tr><td><code>tiers.T2</code></td><td><code>{min_rank: 21, max_rank: 100, min_age_days: 730}</code></td></tr>
+<tr><td><code>tiers.T3</code></td><td><code>{max_age_days: 730}</code> — listed &lt; 2y, or flagged high-volatility</td></tr>
+<tr><td><code>min_history_days</code></td><td><code>90</code> — warm-up before an asset enters the panel</td></tr>
+<tr><td rowspan="3"><code>sources.yaml</code></td><td><code>endpoints.&lt;name&gt;.url</code></td><td>Base URL per source</td></tr>
+<tr><td><code>endpoints.&lt;name&gt;.rate_limit</code></td><td><code>{per_second: 1, per_minute: 60}</code> — per-host token bucket</td></tr>
+<tr><td><code>endpoints.&lt;name&gt;.fallback</code></td><td>Ordered list of alternative endpoints</td></tr>
+<tr><td rowspan="4"><code>features.yaml</code></td><td><code>technical.windows</code></td><td><code>[5, 10, 14, 20, 21, 50, 60, 200]</code></td></tr>
+<tr><td><code>technical.indicators</code></td><td>Which indicators to compute</td></tr>
+<tr><td><code>macro.series</code></td><td>FRED series IDs and their release-lag conventions</td></tr>
+<tr><td><code>cross_asset.max_lag</code></td><td><code>10</code> days — the maximum lag searched</td></tr>
+<tr><td rowspan="3"><code>sentiment.yaml</code></td><td><code>lexicon.topic</code></td><td>Path to the crypto topic-term list (density)</td></tr>
+<tr><td><code>lexicon.sentiment</code></td><td>Path to the crypto sentiment-term list (polarity)</td></tr>
+<tr><td><code>ewma_halflife</code></td><td><code>3</code> days</td></tr>
+<tr><td rowspan="3"><code>models.yaml</code></td><td><code>search_budget</code></td><td>Configurations tried per model — equal across the ladder</td></tr>
+<tr><td><code>seeds</code></td><td><code>[42, 43, 44, 45, 46]</code></td></tr>
+<tr><td><code>lookback</code></td><td><code>60</code> days for sequence models</td></tr>
+<tr><td rowspan="4"><code>evaluation.yaml</code></td><td><code>split</code></td><td><code>{train: 0.70, val: 0.15, test: 0.15}</code></td></tr>
+<tr><td><code>embargo</code></td><td><code>61</code> rows — <code>lookback + horizon</code>, must be derived, never hand-set below the derived value</td></tr>
+<tr><td><code>walk_forward</code></td><td><code>{test_days: 252, train_mode: expanding}</code></td></tr>
+<tr><td><code>metrics</code></td><td>The fixed metric set for the report builder</td></tr>
+</table>
+<p class="caption">Table B.1 — Configuration reference. Every number the experiment depends on lives here, which is what makes the sensitivity analysis in §7.7 possible.</p>
+
+<h2 id="pA-3">C. Data dictionary</h2>
+
+<table class="tight">
+<tr><th style="width:19%">Feature</th><th style="width:20%">Formula / definition</th><th style="width:11%">Lag</th><th>Economic rationale</th></tr>
+<tr><td><code>tech_rsi_14</code></td><td>RSI, 14-period Wilder</td><td>1</td><td>Overbought/oversold; short-term exhaustion</td></tr>
+<tr><td><code>tech_macd_hist</code></td><td>EMA(12) − EMA(26) − signal(9)</td><td>1</td><td>Momentum inflection</td></tr>
+<tr><td><code>tech_bb_pctb</code></td><td>(close − lower) / (upper − lower)</td><td>1</td><td>Position within the volatility envelope</td></tr>
+<tr><td><code>tech_realvol_20</code></td><td>std(log returns, 20) × √365</td><td>1</td><td>Realised volatility; the key regime variable</td></tr>
+<tr><td><code>tech_parkinson_14</code></td><td>Parkinson high–low estimator</td><td>1</td><td>Volatility using intraday range information</td></tr>
+<tr><td><code>tech_obv_slope_10</code></td><td>Slope of OBV over 10 days</td><td>1</td><td>Volume-confirmed accumulation/distribution</td></tr>
+<tr><td><code>tech_mfi_14</code></td><td>Money Flow Index, 14</td><td>1</td><td>Volume-weighted momentum</td></tr>
+<tr><td><code>tech_dd_from_peak_60</code></td><td>close / max(close, 60) − 1</td><td>1</td><td>Drawdown; distress proxy for risk assets</td></tr>
+<tr><td><code>macro_real_yield</code></td><td>10y TIPS yield</td><td>1</td><td>Discount rate for a non-yielding asset</td></tr>
+<tr><td><code>macro_vix_z</code></td><td>z-score of VIX over 252 days</td><td>1</td><td>Systemic risk appetite</td></tr>
+<tr><td><code>macro_dxy_ret</code></td><td>Daily log return of the dollar index</td><td>1</td><td>Inverse crypto relationship (Kreuzer et al. 2026)</td></tr>
+<tr><td><code>macro_dji_ret</code></td><td>Daily log return of the Dow</td><td>1</td><td>Equity–crypto correlation</td></tr>
+<tr><td><code>macro_surprise_*</code></td><td>Actual − consensus, or change from prior release (labelled which)</td><td>release date</td><td>Unexpected macro news; policy transmission</td></tr>
+<tr><td><code>sent_cd</code></td><td>Daily mean of CDW × Sent over the asset's articles</td><td>1</td><td><strong>Primary sentiment variable</strong></td></tr>
+<tr><td><code>sent_raw</code></td><td>Daily mean of the plain Loughran–McDonald score</td><td>1</td><td>The RQ1 comparison arm</td></tr>
+<tr><td><code>sent_crypto_density</code></td><td>Mean CDW across the day's articles</td><td>1</td><td>How crypto-relevant the day's coverage is</td></tr>
+<tr><td><code>sent_ewm_3</code></td><td>EWMA of <code>sent_cd</code>, 3-day half-life</td><td>1</td><td>Smoothed sentiment without the lag of a moving average</td></tr>
+<tr><td><code>sent_z_60</code></td><td>z-score of <code>sent_cd</code> over 60 days</td><td>1</td><td>Standardised sentiment; comparable across assets</td></tr>
+<tr><td><code>sent_stale</code></td><td>1 if the day's article count is 0</td><td>1</td><td>Flags carry-forward values so they can be excluded or interacted with</td></tr>
+<tr><td><code>xasset_sent_&lt;SRC&gt;_l&lt;LAG&gt;</code></td><td>Sentiment of source asset SRC, lagged LAG days</td><td>LAG</td><td><strong>Contagion feature</strong> — the contribution</td></tr>
+<tr><td><code>xasset_lead_lag</code></td><td>Argmax |ρ| for the asset's dominant source</td><td>—</td><td>Which lag carries the cross-asset signal for this asset</td></tr>
+<tr><td><code>regime_price</code></td><td>One-hot: bull/bear × trending/ranging × high/low vol</td><td>1</td><td>The baseline regime definition (D1)</td></tr>
+<tr><td><code>regime_sent</code></td><td>One-hot from price + sentiment signals</td><td>1</td><td>The augmented regime definition (D2)</td></tr>
+<tr><td><code>regime_contagion_level</code></td><td>Mean |ρ| across significant pairs in a rolling window</td><td>1</td><td>Cross-asset linkage activity; links C2 to C3</td></tr>
+</table>
+<p class="caption">Table C.1 — Data dictionary (excerpt). The full dictionary lives in <code>docs/data-cards/</code> and must include, for every feature: the formula, the source, the lag, the warm-up period, and whether it may be used as a label input.</p>
+
+<h2 id="pA-4">D. Sentiment glossary construction protocol</h2>
+
+<p>The lexicon is a research artefact and must be constructed reproducibly. This protocol makes it one.</p>
+
+<ol>
+  <li><strong>Seed corpora.</strong> Assemble: (a) the Nakamoto whitepaper (technical terms); (b) 3+ established crypto glossaries; (c) crypto-relevant academic literature including the four papers in this repository; (d) the top 500 terms by frequency in the project's own news corpus.</li>
+  <li><strong>Candidate generation.</strong> Union the seed lists, normalise case and lemmatise, drop duplicates and multi-word expressions that are not domain-specific.</li>
+  <li><strong>Classification into exactly two lists.</strong> <code>CRYPTO_TOPIC_TERMS</code> (topic markers, no polarity — used for density) and <code>CRYPTO_SENTIMENT_TERMS</code (crypto-specific polarity). Every term gets exactly one label, with a written justification.</li>
+  <li><strong>Polarity assignment.</strong> For sentiment terms, assign a polarity in {−1, 0, +1} by two independent reviewers. Disagreements are adjudicated by a third. Record both reviewers' labels so inter-rater agreement can be reported.</li>
+  <li><strong>Agreement reporting.</strong> Report Cohen's κ over the sentiment terms. Expect ≥ 0.7. Below 0.6, rewrite the guidelines and re-label.</li>
+  <li><strong>Validation.</strong> Score the 200-article double-labelled sample (Table 4.1). Report accuracy, precision, recall and F1 against the human labels, per class.</li>
+  <li><strong>Benchmark.</strong> Score the Financial PhraseBank. Report accuracy and F1. The crypto dictionary must not degrade general financial sentiment performance.</li>
+  <li><strong>Face validity.</strong> Inspect the 10 highest and 10 lowest scored articles. Confirm the ranking is sensible.</li>
+  <li><strong>Freeze and publish.</strong> Version the lexicon file, record its hash in every run manifest, and publish it in the thesis appendix so the method is reproducible.</li>
+  <li><strong>Document the LLM role.</strong> If a generative model was used to help generate candidate terms, state it explicitly in the appendix: which model, how it was prompted, and that every candidate was human-reviewed before inclusion. <strong>Never</strong> present unverified model-generated terms as validated.</li>
+</ol>
+
+<div class="box">
+<h4>Why step 10 is not optional</h4>
+<p>Kreuzer et al. (2026) used GenAI to derive their crypto dictionary and stated so. Following that precedent is legitimate and citable — but only if the role is disclosed and the human verification is real. A lexicon of unreviewed model-generated terms presented as a research instrument would not survive review, and the "AI-assisted" disclosure would be far more damaging than the method itself. Do the review properly, disclose the assistance, and cite Kreuzer et al. (2026) for the methodology.</p>
+</div>
+
+<h2 id="pA-5">E. Team operating checklists</h2>
+
+<h3>Daily</h3>
+<ul class="ckl">
+  <li>Pipeline run completed; check the freshness panel before doing anything else</li>
+  <li>Open issues triaged at the stand-up; each has an owner</li>
+  <li>Push at least one commit; open a PR rather than committing straight to main</li>
+</ul>
+
+<h3>Weekly</h3>
+<ul class="ckl">
+  <li>Friday demo runs the pipeline live in front of the team</li>
+  <li>Retrospective: what slowed us down, what will change</li>
+  <li>Risk register updated</li>
+  <li>Gantt chart updated</li>
+  <li>Every team member can run every workstream's entry point</li>
+</ul>
+
+<h3>Before a supervisor review</h3>
+<ul class="ckl">
+  <li>The review pack is drafted (6 pages, §5.4)</li>
+  <li>The exit criterion for the current phase is demonstrably met</li>
+  <li>Any negative finding is written up honestly</li>
+  <li>Blockers list is specific, with the decision needed stated</li>
+  <li>The next fortnight's exit criterion is agreed</li>
+</ul>
+
+<h3>Before submission (D64)</h3>
+<ul class="ckl">
+  <li>The §9.3 checklist is complete, item by item, with a name against each</li>
+  <li><code>make all</code> has been run from a clean clone on a machine other than the developers'</li>
+  <li>Every reported number has been traced to a registry entry</li>
+  <li>The demo has been run end to end by each member</li>
+  <li>The four predictable defence questions have been rehearsed</li>
+</ul>
+
+<h2 id="pA-6">F. Glossary of terms</h2>
+
+<table class="tight">
+<tr><th style="width:14%">Term</th><th style="width:36%">Expansion</th><th>Note</th></tr>
+<tr><td>ATR</td><td>Average True Range</td><td>Volatility indicator using high/low/close</td></tr>
+<tr><td>ADX</td><td>Average Directional Index</td><td>Trend strength, direction-free</td></tr>
+<tr><td>BB</td><td>Bollinger Bands</td><td>Volatility envelope</td></tr>
+<tr><td>CDW</td><td>Crypto Density Weight</td><td>Share of crypto-specific terms in an article; weights the sentiment score</td></tr>
+<tr><td>CER</td><td>Certainty Equivalent Return</td><td>Risk-adjusted return; the exact formula must be stated wherever it is reported</td></tr>
+<tr><td>CI</td><td>Confidence Interval</td><td>Prefer bootstrap CIs for financial series</td></tr>
+<tr><td>DA</td><td>Directional Accuracy</td><td>Share of correctly predicted return directions</td></tr>
+<tr><td>DM</td><td>Diebold–Mariano test</td><td>Tests whether one model's loss differs from another's</td></tr>
+<tr><td>DPO / DPO</td><td>—</td><td>—</td></tr>
+<tr><td>F1</td><td>F1 score</td><td>Harmonic mean of precision and recall</td></tr>
+<tr><td>FRED</td><td>Federal Reserve Economic Data</td><td>Macro data service, St. Louis Fed</td></tr>
+<tr><td>HOR</td><td>—</td><td>—</td></tr>
+<tr><td>IC</td><td>Information Coefficient</td><td>Rank correlation of predictions with realised outcomes</td></tr>
+<tr><td>LSTM</td><td>Long Short-Term Memory</td><td>Gated recurrent network for sequence data</td></tr>
+<tr><td>MACD</td><td>Moving Average Convergence Divergence</td><td>Trend/momentum oscillator</td></tr>
+<tr><td>MCC</td><td>Matthews Correlation Coefficient</td><td>Robust classification metric under imbalance</td></tr>
+<tr><td>MDD</td><td>Maximum Drawdown</td><td>Largest peak-to-trough decline</td></tr>
+<tr><td>OBV</td><td>On-Balance Volume</td><td>Cumulative volume signed by price direction</td></tr>
+<tr><td>OHLCV</td><td>Open, High, Low, Close, Volume</td><td>The standard OHLCV bar</td></tr>
+<tr><td>OHCLV</td><td><em>Not a term</em></td><td><strong>Correct the proposal's misspelling of OHLCV</strong></td></tr>
+<tr><td>OLS</td><td>Ordinary Least Squares</td><td>Linear regression</td></tr>
+<tr><td>RF</td><td>Random Forest</td><td>Bagged decision-tree ensemble</td></tr>
+<tr><td>R²</td><td>Coefficient of determination</td><td>Variance explained</td></tr>
+<tr><td>RSI</td><td>Relative Strength Index</td><td>Momentum oscillator</td></tr>
+<tr><td>SHAP</td><td>SHapley Additive exPlanations</td><td>Game-theoretic feature attribution</td></tr>
+<tr><td>SMAPE</td><td>Symmetric Mean Absolute Percentage Error</td><td><strong>Problematic near zero — do not use on returns</strong></td></tr>
+<tr><td>Sortino</td><td>Sortino ratio</td><td>Like Sharpe but uses downside deviation</td></tr>
+<tr><td>T3 / T2 / T1</td><td>Asset tiers</td><td>High-beta/new · mid-cap · large-cap</td></tr>
+<tr><td>TF-IDF</td><td>Term Frequency–Inverse Document Frequency</td><td>Not used in this project; listed to prevent confusion</td></tr>
+<tr><td>VADER</td><td>Valence Aware Dictionary and Sentiment Reasoner</td><td>Lexicon-based sentiment tool; <strong>not used</strong> — the project uses Loughran–McDonald plus the crypto lexicon</td></tr>
+<tr><td>WMA</td><td>Weighted Moving Average</td><td>Linearly weighted moving average</td></tr>
+<tr><td>Walk-forward</td><td>Walk-forward validation</td><td>Chronological expanding/rolling validation with embargo</td></tr>
+<tr><td>Z-score</td><td>Standard score</td><td>(x − mean) / standard deviation</td></tr>
+</table>
+
+<div class="warn">
+<p class="lbl">Corrections to the proposal's acronym table</p>
+<p>The following entries in the current proposal are wrong and must be corrected throughout the document, not just in the table: <strong>DSTAT</strong> — not a valid acronym in this context; the intended metric is <strong>DA</strong> (directional accuracy), with MCC and F1 as the stronger alternatives. <strong>CER</strong> — Certainty Equivalent Return, correctly named in the body but misaligned in the table. <strong>VADER</strong> — Valence Aware Dictionary and Sentiment Reasoner, not "Federal Reserve Economic Data". <strong>FRED</strong> — Federal Reserve Economic Data, not "Valence Aware Dictionary". <strong>API</strong> — Application Programming Interface, not "Shapley Additive Explanations". <strong>BTC</strong> — Bitcoin, not "Application Programming Interface". <strong>ETH</strong> — Ether (not "Etherium"). <strong>NLTK</strong> — Natural Language Toolkit, not "Bitcoin". <strong>SHAP</strong> — SHapley Additive exPlanations. <strong>LTSM</strong> — LSTM, not "LTSM". <strong>OHCLV</strong> — OHLCV.</p>
+</div>
+
+<h2 id="pA-7">G. Extended reading list</h2>
+
+<p>The proposal's 18 references should be expanded to 30–40, organised by the themes of Chapter 2. Priority markers: <strong>[★]</strong> = must read in full before P1; <strong>[●]</strong> = read before the corresponding phase.</p>
+
+<h3>Sentiment measurement</h3>
+<ul>
+  <li>[★] Kreuzer, C., Sparrer, C., &amp; Dorfleitner, G. (2026). Beyond pure hype: news sentiment and its role in the BTC and ETH futures market. <em>Review of Derivatives Research</em>, 29(3). <em>— The methodological template for the sentiment engine.</em></li>
+  <li>[★] Loughran, T., &amp; McDonald, B. (2011). When is a liability not a liability? Textual analysis, dictionaries, and 10-Ks. <em>Journal of Finance</em>, 66(1). — The baseline dictionary.</li>
+  <li>[●] Loughran, T., &amp; McDonald, B. (2016). <em>Master Dictionary for Financial Sentiment Analysis</em>. — The file to vendor.</li>
+  <li>[●] Tetlock, P. (2007). Giving content to investor sentiment. <em>Journal of Finance</em>, 62(3). — The origin of the news-tone approach.</li>
+  <li>[●] Engelberg, C., &amp; Parsons, T. (2011). The causal impact of media in financial markets. <em>Journal of Finance</em>, 66(1). — Establishes the causal direction problem.</li>
+  <li>[●] Garcia, D., &amp; Norli, S. (2015). Fear in the markets. <em>Journal of Financial Economics</em>, 117(1). — Google Trends as sentiment.</li>
+  <li> Araci, D. (2019). FinBERT: Financial sentiment analysis with pre-trained language models. <em>arXiv:1908.10063</em>.</li>
+  <li> Kulakowski, M., &amp; Frasincar, F. (2023). Sentiment classification of cryptocurrency-related social media posts. <em>IEEE Intelligent Systems</em>, 38(4).</li>
+</ul>
+
+<h3>Multimodal and deep-learning models</h3>
+<ul>
+  <li>[★] Dashtaki, S. M., et al. (2025). HSIF: A transformer-based cross-attention framework for cryptocurrency trend forecasting via multimodal sentiment–market fusion. <em>IEEE Access</em>, 13. <em>— The closest competitor; reimplement it faithfully.</em></li>
+  <li>[★] Wang, W. (2026). Bitcoin price forecasting under multimodal data fusion: a comparative study of machine learning and deep learning models. <em>ICMRED 2026</em>. <em>— The methodological template.</em></li>
+  <li>[●] Wang, S.-W., &amp; Huang, C.-Y. (2026). A hybrid SVR-based framework for cryptocurrency price forecasting and strategy backtesting. <em>Applied Artificial Intelligence</em>, 40(1). — Multi-asset and trading benchmarks.</li>
+  <li>[●] Zou, Y., &amp; Herremans, D. (2023). PreBit — a multimodal model with Twitter FinBERT embeddings for extreme price movement prediction of Bitcoin. <em>Expert Systems with Applications</em>, 233.</li>
+  <li>[●] Kim, G., et al. (2023). CBITS: Crypto BERT incorporated trading system. <em>IEEE Access</em>, 11.</li>
+  <li>[●] Lee, M.-C. (2024). Bitcoin trend prediction with attention-based deep learning models and technical indicators. <em>Systems</em>, 12(11).</li>
+  <li>[●] Peng, P., et al. (2024). Attention-based CNN-LSTM for high-frequency multiple cryptocurrency trend prediction. <em>Expert Systems with Applications</em>, 237.</li>
+  <li>[●] Vaswani, A., et al. (2017). Attention is all you need. <em>NeurIPS</em>. — The architecture behind M6.</li>
+  <li>[●] Hochreiter, S., &amp; Schmidhuber, J. (1997). Long short-term memory. <em>Neural Computation</em>, 9(8). — The LSTM baseline.</li>
+  <li>[●] Chen, T., &amp; Guestrin, C. (2016). XGBoost. <em>KDD</em>. — The primary model.</li>
+  <li>[●] Lundberg, S., &amp; Lee, S.-I. (2017). A unified approach to interpreting model predictions. <em>NeurIPS</em>. — SHAP.</li>
+</ul>
+
+<h3>Cryptocurrency economics, macro and contagion</h3>
+<ul>
+  <li>[★] Liu, Y., &amp; Tsyvinski, A. (2021). Risks and returns of cryptocurrency. <em>Review of Financial Studies</em>, 34(6). — The foundational paper on crypto risk factors.</li>
+  <li>[●] Bhambhwani, S., Delikouras, S., &amp; Korniotis, G. (2023). Blockchain characteristics and cryptocurrency returns. <em>JIFMIM</em>, 86.</li>
+  <li>[●] Bouri, E., Vo, X. V., &amp; Saeed, T. (2021). Return equicorrelation in the cryptocurrency market. <em>Finance Research Letters</em>, 38. — Cross-asset dependence.</li>
+  <li>[●] Bianchi, D., Guidolin, M., &amp; Pedio, M. (2023). The dynamics of returns predictability in cryptocurrency markets. <em>European Journal of Finance</em>, 29(6).</li>
+  <li>[●] Guidolin, M., &amp; Ionta, S. (2026). Predictive sorting of cryptocurrencies based on fundamentals and sentiment. <em>JIFMIM</em>, 107.</li>
+  <li>[●] Hajek, P., Hikkerova, L., &amp; Sahut, J.-M. (2023). How well do investor sentiment and ensemble learning predict Bitcoin prices? <em>RIBF</em>, 64.</li>
+  <li>[●] Zhang, W., et al. (2026). Cryptocurrency price prediction using sliding empirical mode decomposition with economic variables. <em>Fractal and Fractional</em>, 10(4). — The decomposition line of work.</li>
+  <li>[●] Treiblmaier, M. (2022). "Extrinsic value" in cryptocurrency markets. — The valuation framework behind Kreuzer et al.</li>
+</ul>
+
+<h3>Validation and evaluation methodology</h3>
+<ul>
+  <li>[★] Diebold, F. X., &amp; Mariano, R. S. (1995). Comparing predictive accuracy. <em>JBES</em>, 13(3). — The DM test.</li>
+  <li>[★] Harvey, D., Leybourne, S., &amp; Newbold, P. (1997). Testing the equality of prediction mean squared errors. <em>IJF</em>, 13(2). — The small-sample correction.</li>
+  <li>[★] Benjamini, Y., &amp; Hochberg, Y. (1995). Controlling the false discovery rate. <em>JRSS-B</em>, 57(1). — Multiplicity control.</li>
+  <li>[●] Newey, W., &amp; West, K. (1987). A simple positive semi-definite HAC matrix. <em>Econometrica</em>, 55(3). — HAC errors for the sentiment regressions.</li>
+  <li>[●] Driscoll, J., &amp; Kraay, A. (1998). Consistent covariance matrix estimation with spatially dependent panel data. <em>REStat</em>, 80(4). — Cross-sectional dependence.</li>
+  <li>[●] Granger, C. (1969). Investigating causal relations by econometric models. <em>Econometrica</em>, 37(3). — With the caveat in §6.6.</li>
+  <li>[●] Bailey, D., Borwein, J., López de Prado, M., &amp; Zhu, Q. (2014). Pseudo-mathematics and financial Charlatanism. <em>Notices of the AMS</em>, 61(5). — Read before running any backtest; the paper that should make you cautious about your own.</td></tr>
+</ul>
+
+<h2 id="pA-8">H. Reproducibility statement (template)</h2>
+
+<pre>
+REPRODUCIBILITY STATEMENT
+
+Environment
+  Python 3.11.x, OS: [name/version], hardware: [CPU/GPU]
+  Lockfile: requirements.lock (sha256: ...)
+  Container: [image tag or digest]
+
+Data
+  All sources are public and keyless except FRED (free key).
+  Snapshot date: [YYYY-MM-DD]
+  Curated data fingerprint: sha256:...
+  Regeneration: `make data && make features`   (runtime: ~[N] min)
+
+Experiments
+  Reported runs: [N] (all with git_dirty: false)
+  Run IDs: [list]
+  Manifests: experiments/runs/<run_id>/manifest.json
+  Registry: experiments/registry.sqlite
+
+Reproduction
+  Full pipeline:   `make all`                    (~[N] min, [hardware])
+  Single run:      `make experiment RUN_ID=<id>`
+  Verify only:     `make verify`   (regenerates all tables and diffs against committed)
+
+Determinism
+  Seeds: [list], recorded in each manifest
+  Note: GPU training is not bitwise deterministic; metric differences of
+  <[epsilon] are expected across hardware. All reported figures use the
+  [CPU/GPU] configuration recorded in the manifest.
+
+Known non-determinism
+  [e.g. library version drift in LightGBM; RSS feeds changing after
+   collection — the raw snapshot hash is authoritative]
+</pre>
+
+<div class="ok">
+<p class="lbl">Final note</p>
+<p>This document is a plan, and plans are only useful if they are executed against the gates in Part V. The single most important instruction in it is <strong>G2 on day 28: the causality test must pass before any model is trained.</strong> Everything else in this project is recoverable — a model underperforms, a hypothesis is refuted, a table comes back null. A result built on leaked data is not recoverable, because it will look good and no one will know to distrust it.</p>
+<p>Build the test first. Train second. Report whatever happens.</p>
+</div>

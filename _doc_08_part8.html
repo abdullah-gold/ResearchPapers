@@ -1,0 +1,74 @@
+<div class="pb"></div>
+<h1 id="p8"><span class="hnum">VIII</span>Governance, Ethics &amp; Risk</h1>
+
+<p>The proposal's ethics chapter is one of its stronger sections — the commitments are appropriate and specific. The problem is that none of them are implemented in the described pipeline, and two of them (X/Twitter and Reddit collection; username anonymisation) are incompatible with the free-tier data regime this project is now scoped to. This Part rewrites the commitments so that each one is <em>true of the system that will be built</em>, rather than aspirational.</p>
+
+<h2 id="p8-1">8.1 Ethics and compliance commitments</h2>
+
+<table class="tight">
+<tr><th style="width:19%">Principle</th><th style="width:40%">Commitment</th><th>How it is enforced</th></tr>
+<tr><td><strong>Data provenance</strong></td><td>All data obtained through documented public APIs and RSS feeds, respecting each source's terms of service and rate limits.</td><td>Every collector declares its source, licence and access method in <code>config/sources.yaml</code> and a data card. The rate limiter is configured per host from the source's published limits. No scraping of pages that prohibit it; no credential sharing.</td></tr>
+<tr><td><strong>Terms of service</strong></td><td>No automated collection from sources whose terms prohibit it, and no collection of paywalled or restricted content.</td><td>RSS feeds only — feeds are published for consumption. Articles behind a paywall are not fetched. A source is added only after a team member has read its terms and recorded the conclusion in the data card.</td></tr>
+<tr><td><strong>Privacy</strong></td><td>No personal data is collected, stored, modelled or reported. No usernames, no user identifiers, no profile data.</td><td><strong>Now structural rather than aspirational.</strong> The project collects only published news articles from institutional publications. There is no user-generated content in the corpus at all, so the anonymisation requirement is satisfied by construction rather than by a scrubbing step. If a social source is ever added, the ingestion layer must drop identifiers before persistence, enforced by a schema that has no field for them.</td></tr>
+<tr><td><strong>Bias &amp; representativeness</strong></td><td>Sentiment must not be a proxy for a single outlet's editorial policy.</td><td>Multiple independent feeds (≥ 3) are collected. The sentiment layer reports a per-source distribution comparison (Table 4.1). The dashboard exposes the source mix. The thesis reports the bias check as a limitation.</td></tr>
+<tr><td><strong>Bot &amp; manipulation</strong></td><td>No dependence on content that could be coordinated or automated.</td><td>A direct consequence of the news-only design. News is editorial, not crowdsourced, so it is structurally far less susceptible to coordinated posting than a social feed. Where a feed carries promotional or sponsored content, this is noted in the data card as a residual limitation.</td></tr>
+<tr><td><strong>Market-update exclusion</strong></td><td>Articles that merely recap past price moves are excluded from the sentiment corpus.</td><td>Implemented in the sentiment layer, following Kreuzer et al. (2026). This is both an ethics measure (avoid circular reasoning about price driving news) and a methodological necessity — it addresses endogeneity, and without it the sentiment-return relationship is partly self-referential.</td></tr>
+<tr><td><strong>No investment advice</strong></td><td>The output is academic research. It is not a trading system, not a recommendation, and not advice.</td><td>Enforced in the artefacts: every model card carries an out-of-scope section; the dashboard footer states it on every page; the API returns a disclaimer field; the thesis concludes with it. No order routing exists in the codebase, so the boundary is enforced by architecture, not only by prose.</td></tr>
+<tr><td><strong>Transparency</strong></td><td>Methodology, data sources, feature definitions, model architecture and limitations are documented and reproducible.</td><td>The documentation set of Part VII, the run manifests, the data cards and the model cards. A third party can re-run every number.</td></tr>
+<tr><td><strong>No overstatement</strong></td><td>Results are reported at their true strength, including non-significant and contradictory findings.</td><td>The experiment log records negative results as first-class entries. The thesis reports the CI on every effect estimate. The model cards list known failure modes explicitly, including where the model should not be trusted.</td></tr>
+<tr><td><strong>Attribution of prior work</strong></td><td>Published methods, datasets and figures are used with credit, and any adaptation is marked as such.</td><td>The reimplementation of Dashtaki et al. (2025)'s architecture is cited as such in the code, the thesis and the model card. The sentiment methodology is cited to Kreuzer et al. (2026) in the module docstring. Adapted figures carry an attribution note.</td></tr>
+</table>
+<p class="caption">Table 8.1 — Corrected ethics commitments, each with an enforcement mechanism.</p>
+
+<div class="ok">
+<p class="lbl">Why the news-only design is ethically cleaner, not merely cheaper</p>
+<p>The original proposal's social-media-based design would have required bot detection, coordinated-posting detection, per-user fairness analysis, and a genuine personal-data regime. The news-only design eliminates all four — not by neglecting them, but by scoping the construct to a channel where they do not apply. This is worth stating explicitly in the thesis's ethics chapter, because it converts a limitation into a considered design decision. The framing is: <em>we measure the rationally-priced news channel, which prior work identifies as the channel institutions actually respond to, and we therefore avoid the manipulation and privacy problems of social sentiment entirely.</em></p>
+</div>
+
+<h2 id="p8-2">8.2 Research integrity controls</h2>
+
+<table class="tight">
+<tr><th style="width:26%">Risk</th><th style="width:34%">Control</th><th>Verification</th></tr>
+<tr><td><strong>Selective reporting</strong> — reporting only the runs that worked</td><td>Every run is logged to the registry, including failures and abandoned configurations. The experiment log records descoped runs and why.</td><td>Registry row count vs the number of commits on <code>exp/*</code> branches. A missing run is visible.</td></tr>
+<tr><td><strong>Post-hoc hypothesis drift</strong></td><td>Hypotheses H1–H5 are fixed in <code>docs/hypotheses.md</code> before P6, with a git commit and a date. Any later change is a new hypothesis with a new ID.</td><td>The file's commit history predates the results commits.</td></tr>
+<tr><td><strong>Metric shopping</strong></td><td>The metric set is fixed in <code>config/evaluation.yaml</code> before the evaluation phase, and the reporting builder emits the fixed table set regardless of the values.</td><td>All 12 tables of §6.8 are produced by one command; a missing table is a build failure.</td></tr>
+<tr><td><strong>Overfitting to the test set</strong></td><td>Test folds are touched once. Any iteration on test performance is logged as a test-set violation and disclosed.</td><td>Fold manifests record the number of times each fold was evaluated.</td></tr>
+<tr><td><strong>Undisclosed scope changes</strong></td><td>Descoping decisions become ADRs the same week.</td><td>ADR log review at each supervisor meeting.</td></tr>
+<tr><td><strong>AI-generated text</strong></td><td>Academic writing must be the team's own. Any use of an AI writing assistant in the thesis text is disclosed to the supervisor in writing, and the team retains responsibility for every claim.</td><td>Written disclosure; the supervisor's written acknowledgement. Disclosure is the control — the risk is undisclosed use, not use.</td></tr>
+<tr><td><strong>Fabricated or adjusted results</strong></td><td>All reported numbers are registry-generated. Manual edits to a table are impossible without editing generated files, and those are version-controlled.</td><td><code>make report</code> regenerates every table; a diff against the committed version shows any manual change.</td></tr>
+</table>
+<p class="caption">Table 8.2 — Research integrity controls.</p>
+
+<h2 id="p8-3">8.3 Risk register</h2>
+
+<table class="tight">
+<tr><th style="width:5%">#</th><th style="width:22%">Risk</th><th style="width:9%">Likelihood</th><th style="width:9%">Impact</th><th style="width:31%">Mitigation</th><th>Owner</th></tr>
+<tr><td>R1</td><td>RSS feed history is shallower than required</td><td>Medium</td><td><span class="tag t-red">High</span></td><td>Verify in D4–D6. Fallback to a cross-sectional design (more assets × fewer days). Document the power analysis in either case.</td><td>Hasnayen</td></tr>
+<tr><td>R2</td><td>Tier-3 asset history insufficient for panel inclusion</td><td>High</td><td><span class="tag t-red">High</span></td><td>Enforce <code>min_history_days</code>; variable-length sequences; extend the sample window earlier where possible; report tier coverage explicitly.</td><td>Md. Abdullah</td></tr>
+<tr><td>R3</td><td>Sentiment lexicon quality insufficient (κ &lt; 0.4)</td><td>Medium</td><td><span class="tag t-amb">Medium</span></td><td>Loughran–McDonald arm always available; double-labelled 200-article validation; lexicon iteration with team review.</td><td>Md. Abdullah</td></tr>
+<tr><td>R4</td><td>Sentiment shows no predictive signal</td><td>Medium</td><td><span class="tag t-amb">Medium</span></td><td>A well-powered null is a publishable finding. Pre-commit to reporting it as such. The tier-elasticity question remains answerable even with a weak aggregate effect.</td><td>All</td></tr>
+<tr><td>R5</td><td>No contagion signal beyond the BTC→ETH case</td><td>Medium</td><td><span class="tag t-amb">Medium</span></td><td>Same: report the null with the test. The negative result constrains the literature usefully.</td><td>Tahmid</td></tr>
+<tr><td>R6</td><td>API rate limiting or source outage</td><td>High</td><td><span class="tag t-amb">Medium</span></td><td>Rate limiter, circuit breaker, backoff, raw caching, graceful degradation, freshness panel, source redundancy.</td><td>Hasnayen</td></tr>
+<tr><td>R7</td><td>Feature-set or tier definitions revised after results are seen</td><td>Medium</td><td><span class="tag t-red">High</span></td><td>Freeze the universe, tiers and feature sets in a tagged commit before P6. Changes require a new ADR and a full re-run.</td><td>All</td></tr>
+<tr><td>R8</td><td>Model training time exceeds the budget</td><td>Medium</td><td><span class="tag t-amb">Medium</span></td><td>Fixed search budget; reduced-feature tuning first; GPU for deep models; descope M5/M6 to fewer seeds if needed, disclosed.</td><td>Tahmid</td></tr>
+<tr><td>R9</td><td>Key team member unavailable (exam, illness)</td><td>Medium</td><td><span class="tag t-red">High</span></td><td>Cross-review rotation so at least two people can run each workstream; weekly demo ensures knowledge is shared; ADR log preserves rationale.</td><td>All</td></tr>
+<tr><td>R10</td><td>Thesis writing falls behind the schedule</td><td>High</td><td><span class="tag t-amb">Medium</span></td><td>Thursday writing slot; methodology written as the work proceeds; results drafted from the registry; supervisor reviews at D50 and D58.</td><td>All</td></tr>
+<tr><td>R11</td><td>Results not reproducible from a clean clone</td><td>Medium</td><td><span class="tag t-red">High</span></td><td>The reproducibility contract (§6.7) is a gate at G7, checked before submission — not after.</td><td>Hasnayen</td></tr>
+<tr><td>R12</td><td>Overstated results in a derived paper</td><td>Low</td><td><span class="tag t-red">High</span></td><td>The thesis is the authoritative document. Any submitted paper must reproduce the thesis's numbers exactly and carry the same limitations.</td><td>All</td></tr>
+<tr><td>R13</td><td>Data licensing or ToS violation</td><td>Low</td><td><span class="tag t-red">High</span></td><td>Data cards record the licence and the terms review; only RSS and documented public APIs are used; no paywalled content is fetched.</td><td>Md. Abdullah</td></tr>
+<tr><td>R14</td><td>Supervisor feedback requires a scope change late</td><td>Low</td><td><span class="tag t-red">High</span></td><td>Fortnightly reviews aligned to the gates; scope decisions are made at gates, not in week 12. The contribution list in §2.4 is the change-control reference.</td><td>All</td></tr>
+</table>
+<p class="caption">Table 8.3 — Project risk register. Reviewed at every Friday retrospective and every supervisor meeting.</p>
+
+<h2 id="p8-4">8.4 API and platform compliance</h2>
+
+<table class="tight">
+<tr><th style="width:16%">Source</th><th style="width:30%">Requirement</th><th>Implementation</th></tr>
+<tr><td>Binance Public API</td><td>Rate limits; no redistribution of bulk data in violation of terms; attribution</td><td>Respect the published request-weight limits via the per-host token bucket. Cache raw responses. Cite Binance as the data source in the thesis and data card. Do not republish bulk klines as a public dataset.</td></tr>
+<tr><td>FRED</td><td>Free API key; rate limits; attribution to the St. Louis Fed</td><td>Key in <code>.env</code>; ~10 requests/min; every series cited with its FRED series ID and the source institution in the thesis.</td></tr>
+<tr><td>News RSS feeds</td><td>Feeds are published for consumption; article text belongs to the publisher</td><td>Store headlines, summaries and metadata for <em>analysis</em>. Do not redistribute full article text. Cite the outlet and the retrieval date. If a feed's terms prohibit automated use, it is not used.</td></tr>
+<tr><td>Yahoo Finance</td><td>Unofficial access; generally free for personal/research use</td><td>Use as a fallback and cross-check, not as the primary. Do not build the project's contribution on a source with unstable access.</td></tr>
+<tr><td>CoinGecko</td><td>Free tier rate limits; attribution</td><td>Respect the free-tier quota; cache aggressively; cite with attribution and snapshot date. Market-cap snapshots are versioned because they drive tier assignment.</td></tr>
+<tr><td>Open-source libraries</td><td>Respect licences (MIT, BSD, Apache are fine)</td><td>Maintain a <code>THIRD_PARTY_LICENSES.md</code> generated from the lockfile. The Loughran–McDonald dictionary has its own terms — vendor it, cite it, and check its terms before redistribution.</td></tr>
+</table>
+<p class="caption">Table 8.4 — Platform compliance requirements and their implementation.</p>

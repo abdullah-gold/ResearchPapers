@@ -1,0 +1,161 @@
+<div class="pb"></div>
+<h1 id="p2"><span class="hnum">II</span>Repositioning the Research</h1>
+
+<p>Part I established that the current framing is not defensible because its central novelty claim is contradicted by the literature in the same folder. This Part constructs a framing that <em>is</em> defensible, shows exactly how it differs from each of the four source papers, and specifies the hypotheses that will be tested.</p>
+
+<h2 id="p2-1">2.1 The genuine white space</h2>
+
+<p>Reading the four papers together rather than separately reveals a pattern that none of them states about itself. Consider what each treats as fixed:</p>
+
+<table>
+<tr><th style="width:20%">Paper</th><th style="width:26%">What it treats as fixed</th><th>What it therefore cannot ask</th></tr>
+<tr>
+  <td>Dashtaki et al. (2025)</td>
+  <td>The asset (BTC), and sentiment as a uniform 3-vector per day</td>
+  <td>Whether the same sentiment vector carries different information for a large-cap than for a high-beta small-cap; whether it carries different information in a bull market than in a crash.</td>
+</tr>
+<tr>
+  <td>Wang (2026)</td>
+  <td>The asset (BTC); regime inferred from price only</td>
+  <td>Whether sentiment helps <em>identify</em> the regime rather than merely being conditioned on it; whether a model can be made to degrade gracefully instead of failing outright under regime shift.</td>
+</tr>
+<tr>
+  <td>Kreuzer et al. (2026)</td>
+  <td>The sentiment→return mapping as a stable, asset-specific elasticity</td>
+  <td>Whether that mapping <em>varies</em> by asset tier; whether the BTC→ETH spillover they observe can be operationalised as a predictive feature rather than a side remark.</td>
+</tr>
+<tr>
+  <td>Wang &amp; Huang (2026)</td>
+  <td>Assets as independent prediction targets; sentiment absent entirely</td>
+  <td>Anything at all about how sentiment links assets to one another.</td>
+</tr>
+</table>
+<p class="caption">Table 2.1 — What each source holds constant. The white space lies in what all four hold constant.</p>
+
+<p>Stated as a single sentence: <strong>every existing study treats the sentiment-to-return relationship as a fixed, asset-independent, regime-independent constant. This project treats it as a structured function of asset tier and market regime, and operationalises the cross-asset structure as a predictive feature.</strong></p>
+
+<div class="lead">
+<p class="lbl">Three defensible contributions</p>
+<p><strong>C1 — Tier-conditional sentiment elasticity.</strong> Estimate the sentiment-to-return elasticity separately by asset tier (large-cap, mid-cap, high-beta/new listing) and test whether it differs significantly. The hypothesis is that sentiment sensitivity scales with market depth and listing maturity: deep, long-established markets absorb sentiment into price slowly and efficiently, while thin, newly-listed, high-beta assets react sharply and with more noise.</p>
+<p><strong>C2 — Operationalised contagion.</strong> Convert the BTC→ETH sentiment spillover observed by Kreuzer et al. into a leading indicator: measure lead–lag structure across the asset universe and feed lagged large-cap sentiment as an explicit cross-asset feature into small-cap models. Test whether it improves out-of-sample accuracy for the receiving assets.</p>
+<p><strong>C3 — Regime-conditional model routing.</strong> Detect market regime from a combination of price-based and sentiment-based signals, then route to a regime-appropriate model (or apply regime-conditional calibration). Test whether sentiment adds more predictive value in high-volatility regimes than in trending ones.</p>
+</div>
+
+<h2 id="p2-2">2.2 Revised title and framing</h2>
+
+<h3>Primary title (recommended)</h3>
+<div class="box">
+<p><strong>"Sentiment-Aware Multimodal Forecasting of Cryptocurrency Returns: A Tier-Stratified, Regime-Aware Framework with Cross-Asset Contagion Features"</strong></p>
+<p class="small" style="margin-bottom:0">Subtitle: <em>Evidence from large-cap, mid-cap and high-beta digital assets, 2019–2026</em></p>
+</div>
+
+<h3>Fallback ladder</h3>
+<p>If the supervisor prefers a narrower title, the following are progressively weaker but still defensible. Do <strong>not</strong> revert to "LSTM and News Sentiment Analysis" — that title is incompatible with the body and signals a single-model study (defect D1).</p>
+<table class="tight">
+<tr><th style="width:6%">Rank</th><th style="width:44%">Title</th><th>Trade-off</th></tr>
+<tr><td>1</td><td><em>Sentiment-Aware Multimodal Forecasting of Cryptocurrency Returns: A Tier-Stratified, Regime-Aware Framework with Cross-Asset Contagion Features</em></td><td>Matches the contributions exactly. Long, but every clause is load-bearing.</td></tr>
+<tr><td>2</td><td><em>Tier-Stratified Sentiment-Aware Forecasting of Cryptocurrency Returns with Cross-Asset Contagion Features</em></td><td>Drop "regime-aware" if C3 is descoped. Keep C1 and C2.</td></tr>
+<tr><td>3</td><td><em>Does Sentiment Matter More for High-Beta Cryptocurrencies? A Multi-Tier Forecasting Study</em></td><td>Question-led title. Very accessible; slightly less conventional for a thesis.</td></tr>
+<tr><td>4</td><td><em>Multimodal Sentiment and Market Fusion for Multi-Tier Cryptocurrency Forecasting</em></td><td>Safe but generic. Still distinguishable from the four sources if C1–C3 are implemented.</td></tr>
+</table>
+
+<div class="warn">
+<p class="lbl">Titles to avoid</p>
+<p>"Cryptocurrency Price Prediction Using LSTM and News Sentiment Analysis" — contradicts the methodology, and the LSTM-centric framing is contradicted by two of the four source papers. "Attention-Based / Transformer-Based Crypto Forecasting" — squarely within Dashtaki et al. (2025)'s territory. "Cross-Attention for Crypto Sentiment Fusion" — that <em>is</em> Dashtaki et al. (2025).</p>
+</div>
+
+<h2 id="p2-3">2.3 Refined research questions and hypotheses</h2>
+
+<p>The four current RQs must be replaced wholesale (defect D3). The replacement set below is deliberately narrow, falsifiable, and each maps to one contribution and to one experiment in Part VI.</p>
+
+<table>
+<tr><th style="width:6%">ID</th><th style="width:40%">Research question</th><th style="width:22%">Contribution served</th><th>Answerable with</th></tr>
+<tr><td><strong>RQ1</strong></td><td>Does a cryptocurrency-specific, density-weighted news sentiment measure (as opposed to a generic financial dictionary) produce a stronger and more stable relationship with forward returns than a baseline Loughran–McDonald sentiment measure?</td><td>Methodological foundation (C1 depends on it)</td><td>Regression with Newey–West errors, as in Kreuzer et al. (2026), extended to the multi-tier panel.</td></tr>
+<tr><td><strong>RQ2</strong></td><td>Is the sentiment-to-forward-return elasticity systematically different between large-cap, mid-cap and high-beta/newly-listed assets?</td><td><strong>C1</strong></td><td>Panel regression with tier interactions; test of interaction coefficients; bootstrap CIs.</td></tr>
+<tr><td><strong>RQ3</strong></td><td>Does lagged large-cap sentiment carry incremental predictive information for non-BTC assets beyond their own sentiment and own price history?</td><td><strong>C2</strong></td><td>Nested feature-set comparison with Diebold–Mariano significance testing; lead–lag cross-correlation analysis.</td></tr>
+<tr><td><strong>RQ4</strong></td><td>Is the predictive contribution of sentiment conditional on market regime, and does regime-aware model routing outperform a single global model under regime shift?</td><td><strong>C3</strong></td><td>Regime-conditional metric decomposition; rolling-window comparison of global vs routed models.</td></tr>
+<tr><td><strong>RQ5</strong></td><td>Does the proposed framework deliver statistically significant out-of-sample improvement — and does that improvement survive realistic transaction costs?</td><td>Economic validation of C1–C3</td><td>Walk-forward validation, DM test, cost-aware backtest with Sharpe, Sortino, MaxDD and CER.</td></tr>
+</table>
+<p class="caption">Table 2.2 — Revised research questions.</p>
+
+<h3>Hypotheses</h3>
+
+<table>
+<tr><th style="width:6%">ID</th><th style="width:52%">Hypothesis</th><th>Test &amp; decision rule</th></tr>
+<tr><td><strong>H1</strong></td><td>The crypto-density-weighted sentiment measure (CDW) exhibits a significantly stronger contemporaneous association with forward returns than the unweighted Loughran–McDonald measure.</td><td>Nested regression; β difference tested by t-statistic. Reject H0 at α = 0.05.</td></tr>
+<tr><td><strong>H2</strong></td><td>The sentiment elasticity |β<sub>sentiment</sub>| decreases monotonically as asset tier moves from high-beta/newly-listed to large-cap established.</td><td>Test of ordered interaction coefficients across the three tiers; Jonckheere–Terpstra trend test. Reject H0 if the ordering is not monotone at α = 0.05.</td></tr>
+<tr><td><strong>H3</strong></td><td>Lagged large-cap (BTC) sentiment adds statistically significant out-of-sample predictive power for non-BTC assets over and above their own sentiment and own price features.</td><td>Nested model comparison (F2 vs F3) with Diebold–Mariano test on loss differentials; reject H0 if DM p &lt; 0.05 in the majority of receiving assets.</td></tr>
+<tr><td><strong>H4</strong></td><td>The predictive contribution of sentiment is larger in high-volatility and bear regimes than in trending/bull regimes.</td><td>Regime-conditional metric decomposition with interaction terms; test of the sentiment×regime interaction coefficient. Reject H0 at α = 0.05.</td></tr>
+<tr><td><strong>H5</strong></td><td>The proposed framework's out-of-sample improvement over baselines is statistically significant and remains economically meaningful after accounting for transaction costs and slippage.</td><td>DM test on squared-error differentials (H5a) and net-of-cost Sharpe ratio improvement with bootstrap CI (H5b).</td></tr>
+</table>
+<p class="caption">Table 2.3 — Hypotheses with explicit nulls and decision rules. Note the asymmetry in H2: this is the hypothesis most likely to be <em>refuted</em>, and a refutation that is well-supported is a publishable finding, not a failure.</p>
+
+<div class="ok">
+<p class="lbl">Note on H2</p>
+<p>If sentiment turns out to matter <em>more</em> for large-caps, H2 is refuted. That is an acceptable and interesting outcome, and it should be written up as such. A thesis that reports a clean refutation of a plausible hypothesis, supported by a well-powered test across a stratified panel, is stronger work than one that reports a marginal confirmation of the expected direction. Build the experiment so that either outcome is reportable — that means the tiers must be large enough and the test must have adequate power, which is why Part VI §6.2 specifies minimum tier sample sizes.</p>
+</div>
+
+<h2 id="p2-4">2.4 Contribution statement</h2>
+
+<p>Use this verbatim in §5 of the proposal and in §1.4 of the thesis.</p>
+
+<div class="box">
+<p><strong>This research makes four contributions.</strong></p>
+<p><strong>(1) A crypto-density-weighted, news-sourced sentiment measure operationalised for a multi-tier asset panel.</strong> Extending the dictionary-plus-density-weighting logic of Kreuzer et al. (2026) to a panel spanning large-cap, mid-cap and high-beta assets, and establishing the measure's reliability against a generic financial-dictionary baseline across tiers.</p>
+<p><strong>(2) Evidence on tier-conditional sentiment elasticity.</strong> The first systematic test of whether the sentiment-to-return relationship is structurally uniform across the cryptocurrency asset class. We hypothesise it is not, and that the gradient follows market depth and listing maturity.</p>
+<p><strong>(3) An operationalised cross-asset contagion framework.</strong> Converting the BTC→ETH sentiment spillover reported by Kreuzer et al. (2026) into a predictive feature by measuring lead–lag structure across the panel and testing whether lagged large-cap sentiment adds out-of-sample value for receiving assets. We further examine whether contagion intensity is itself tier-graded — that is, whether spillover attenuates with the distance between tiers.</p>
+<p><strong>(4) A regime-conditional routing and evaluation protocol.</strong> A framework that detects regime from combined price and sentiment signals, routes to regime-appropriate models, and — critically — reports performance decomposed by regime and by asset tier, rather than as a single aggregate number. This directly addresses the validation weakness identified by Wang (2026), whose own findings show that single-split aggregate metrics obscure substantial regime-dependent degradation.</p>
+<p class="small" style="margin-bottom:0"><strong>Explicitly not claimed:</strong> a new neural architecture; a new sentiment model; a new validation method; a new trading strategy. Every such component is drawn from existing published work and credited accordingly.</p>
+</div>
+
+<h2 id="p2-5">2.5 What to drop from the current proposal</h2>
+
+<table>
+<tr><th style="width:30%">Element</th><th style="width:10%">Action</th><th>Reason</th></tr>
+<tr><td>Sentiment from X/Twitter and Reddit APIs</td><td><span class="tag t-red">Remove</span></td><td>Under the free-tier regime these are paid (X API has a paid Basic tier at minimum; Reddit's strict policy discourages commercial/analytical scraping and its OAuth approval is not obtainable in a 64-day window). Retaining them in the design creates an unimplementable dependency. See §3.5 for the free-tier substitute: aggregated RSS news + public exchange/aggregator sentiment proxies.</td></tr>
+<tr><td>Frequency-decomposition / EMD feature layer</td><td><span class="tag t-amb">Defer</span></td><td>Not required by C1–C3. Zhang et al. (2026) already occupies this space. Keep the citation; do not claim the gap; add the layer only if the schedule in Part V permits (it is marked as an optional stretch task).</td></tr>
+<tr><td>"Blockchain fundamentals" (on-chain metrics)</td><td><span class="tag t-amb">Scope down</span></td><td>The proposal's Problem Statement says existing models are "blockchain-fundamentals-based" — but the proposed solution never includes any on-chain feature. Either add a minimal on-chain layer (free options exist — see §3.5) or remove the phrase from the problem statement. Adding a small set of on-chain features (active addresses, hash rate, exchange netflow for BTC only) is cheap and strengthens the multi-modality claim.</td></tr>
+<tr><td>"High-frequency" sentiment claims</td><td><span class="tag t-amb">Reword</span></td><td>Say "daily-resolution news sentiment" and, where intraday aggregation exists for the news layer, say so precisely. Overstating frequency is trivially checkable by a reviewer.</td></tr>
+<tr><td>Moving average as the headline comparison</td><td><span class="tag t-grn">Demote</span></td><td>Retain as one of four baselines in the ladder (§6.3), not as the comparison of record.</td></tr>
+<tr><td>The plagiarism/AI-detection appendix</td><td><span class="tag t-red">Remove</span></td><td>See defect D21.</td></tr>
+<tr><td>The 5-layer architecture with 5 assets</td><td><span class="tag t-grn">Replace</span></td><td>Replace with the 6-layer architecture of Part III, which is grounded in the free-tier sources actually available and separates the pipeline from the serving layer.</td></tr>
+</table>
+<p class="caption">Table 2.4 — Scope reconciliation between the proposal text and the implementation reality.</p>
+
+<h2 id="p2-6">2.6 How to use each of the four papers</h2>
+
+<p>These are the four papers' correct role in your literature review. Misusing them — citing them as if they supported your method rather than as the competition — is the most common way capstone proposals fail their own literature review.</p>
+
+<table class="tight">
+<tr><th style="width:17%">Source</th><th style="width:26%">What you take from it</th><th style="width:26%">How you position against it</th><th>Concrete action in your thesis</th></tr>
+<tr>
+  <td><strong>Dashtaki et al. (2025)</strong><br><span class="small">IEEE Access, HSIF</span></td>
+  <td>The dual-stream architecture precedent; FinBERT as a financial sentiment encoder; SHAP-based feature pruning; the LSTM-family-fails-to-profit finding.</td>
+  <td>You are <em>not</em> proposing a new fusion architecture. You adopt their fusion as a <strong>baseline</strong> and show that its benefit is not uniform across asset tiers and regimes.</td>
+  <td>Implement HSIF-style cross-attention as one model in your ladder, restricted to the assets you can support. Report its performance decomposed by tier and regime — that decomposition <em>is</em> your finding, and it requires no new architecture.</td>
+</tr>
+<tr>
+  <td><strong>Wang (2026)</strong><br><span class="small">ICMRED</span></td>
+  <td>The feature-engineering template (technical + macro + derived); the three-partition validation design; the regime-split logic; the backtest metric set; the XGBoost-over-LSTM result.</td>
+  <td>You <em>extend</em> their protocol to a multi-asset panel and add sentiment, which they exclude entirely. Their finding that regime matters becomes your premise, not your discovery.</td>
+  <td>Reproduce their protocol as your control condition, then extend it. Cite their specific numbers as the prior baseline your numbers should be compared against.</td>
+</tr>
+<tr>
+  <td><strong>Kreuzer et al. (2026)</strong><br><span class="small">Rev. Deriv. Res.</span></td>
+  <td>The sentiment methodology: Loughran–McDonald dictionary + crypto density weight + GenAI-built glossary; the futures-market framing; the lag structure with negative t−3 coefficient; the BTC→ETH spillover observation.</td>
+  <td>You <em>operationalise</em> their finding. They observe spillover in a two-asset regression; you convert it into a feature and test whether it predicts.</td>
+  <td>Reproduce their sentiment construction exactly as your first experiment (RQ1), then extend the dictionary and CDW to the full panel and test tier-conditionality (RQ2).</td>
+</tr>
+<tr>
+  <td><strong>Wang &amp; Huang (2026)</strong><br><span class="small">Appl. Artif. Intell.</span></td>
+  <td>The multi-asset precedent (BTC/ETH/XRP/LTC); the rule-based trading strategies as a benchmark; the sliding-window feature construction; the SVR efficiency argument.</td>
+  <td>You <em>extend</em> their multi-asset treatment by adding the cross-asset structure and sentiment they omit. Their independence assumption is your baseline.</td>
+  <td>Include one of their rule-based strategies (Bollinger or MA crossover) as a trading benchmark, so your economic comparison is against something outside your own model family.</td>
+</tr>
+</table>
+<p class="caption">Table 2.5 — Correct role of each source paper.</p>
+
+<div class="lead">
+<p class="lbl">The one-sentence positioning statement</p>
+<p>Your work is not "a better model for crypto prediction" — it is <strong>"a study of how the structure of the sentiment channel differs across the cryptocurrency asset class, and whether that structure is exploitable."</strong> The models are the instrument; the asset-class structure of sentiment is the object of study. Write the thesis with that object in mind and every experimental choice follows naturally: you stratify by tier because the object is tier-dependent, you test lead–lag because the object has cross-sectional structure, you decompose by regime because the object's strength varies with conditions, and you validate economically because a sentiment channel that does not survive costs is not a channel.</p>
+</div>

@@ -1,0 +1,801 @@
+Received 9 August 2025, accepted 30 August 2025, date of publication 2 September 2025, date of current version 11 September 2025.
+Digital Object Identifier 10.1109/ACCESS.2025.3605522
+
+HSIF: A Transformer-Based Cross-Attention
+Framework for Cryptocurrency Trend Forecasting
+via Multimodal Sentiment-Market Fusion
+
+SAEED MOHAMMADI DASHTAKI 1, MEHDI HOSSEINI CHAGAHI 1, AEIN BAHADORI                                                    2,
+BEHZAD MOSHIRI 1,3, (Senior Member, IEEE), MD. JALIL PIRAN 4, (Senior Member,                                          IEEE),
+
+AND ALLAHYAR MONTAZERI 5, (Member, IEEE)
+
+1School of Electrical and Computer Engineering, College of Engineering, University of Tehran, Tehran 1439957131, Iran
+2Department of Information Engineering, University of Padova, 35122 Padua, Italy
+3Department of Electrical and Computer Engineering, University of Waterloo, Waterloo, ON N2L 3G1, Canada
+4Department of Computer Science and Engineering, Sejong University, Seoul 05006, South Korea
+5School of Engineering, Lancaster University, LA1 4YW Lancaster, U.K.
+
+Corresponding authors: Allahyar Montazeri (a.montazeri@lancaster.ac.uk) and Behzad Moshiri (moshiri@ut.ac.ir)
+
+ABSTRACT Cryptocurrency markets are highly volatile and sentiment-driven, posing challenges to
+traditional forecasting methods. This paper presents Hard and Soft Information Fusion (HSIF), a novel
+Transformer-based dual-stream model that combines market data and social sentiment using Financial
+Bidirectional Encoder Representations from Transformers (FinBERT), a financial sentiment analysis tool,
+and a bidirectional cross-attention mechanism. Evaluations on multi-year Bitcoin data show that HSIF
+achieves 97.48% accuracy and a 26.64% return, outperforming Long Short-Term Memory (LSTM)-
+based and other multimodal models. The results highlight the effectiveness of domain-specific sentiment
+embeddings and cross-modal attention in enhancing trend prediction accuracy for volatile cryptocurrency
+markets.
+
+INDEX TERMS Cryptocurrency price forecasting, transformer-based models, multimodal information
+fusion, cross-attention mechanism, natural language processing, sentiment analysis.
+
+I. INTRODUCTION                                                         represented approximately 40% of the total cryptocurrency
+Cryptocurrencies have emerged as a transformative force in              market capitalization, underscoring its significant market
+the global financial landscape, attracting substantial attention        influence. However, the challenge of accurately predicting
+from investors and researchers. By early 2022, the market               price movements in such a volatile market remains critical
+capitalization of cryptocurrencies reached nearly two trillion          for making informed investment decisions [1], [3]. Recent
+dollars, signifying the growing adoption and integration of             studies have also highlighted the need for improved fore-
+digital assets into mainstream financial systems [1], [2].              casting techniques that consider multiple factors influencing
+Among various cryptocurrencies, Bitcoin, introduced in                  the markets, such as macroeconomic variables and sentiment
+2008 as the first decentralized digital currency, continues to          analysis [6], [7], [8].
+hold a dominant position, both as a store of value and a
+peer-to-peer payment system [3], [4], [5].                                 Traditional methods for cryptocurrency price prediction
+                                                                        typically rely on quantitative data, such as historical prices
+   The decentralized nature of Bitcoin, combined with the               and technical indicators [9], [10], [11], [12]. Recent research,
+volatility inherent in cryptocurrency markets, presents both            however, has emphasized the importance of incorporating
+opportunities and risks for investors. In early 2022, Bitcoin           qualitative data, such as investor sentiment derived from
+                                                                        social media, news articles, and other external sources,
+   The associate editor coordinating the review of this manuscript and  in improving predictive models. This shift towards integrating
+                                                                        both quantitative and qualitative data is essential, as price
+approving it for publication was Arianna D'Ulizia .
+
+156600  2025 The Authors. This work is licensed under a Creative Commons Attribution 4.0 License.                                  VOLUME 13, 2025
+                  For more information, see https://creativecommons.org/licenses/by/4.0/
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+movements in cryptocurrency markets are often influenced                    financial returns, providing a more comprehensive approach
+by a combination of objective factors and market psychology                 to cryptocurrency trend prediction.
+[13], [14], [15], [16], [17].
+                                                                               In summary, the contributions of this study are as follows:
+   Recent advancements in artificial intelligence (AI) have                    · A novel Transformer-based cross-attention architecture
+significantly improved the accuracy of predictive models
+by enabling them to capture complex patterns within large                         is proposed, capable of fusing heterogeneous data
+and diverse datasets. AI has been successfully applied                            modalities, specifically, structured quantitative market
+to various financial tasks, including algorithmic trading,                        indicators and unstructured textual sentiment, to model
+risk management, fraud detection, and credit scoring. The                         complex temporal and semantic dependencies in
+application of AI to cryptocurrency price prediction has                          cryptocurrency trend prediction.
+similarly gained attention, with promising results achieved                    · A financial-domain NLP pipeline is implemented
+using both machine learning (ML) algorithms and more                              using financial BERT (FinBERT) to extract sentiment
+sophisticated deep learning (DL) approaches [18], [19], [20],                     features from social media and news content. These
+[21], [22], [23], [24].                                                           sentiment-aware representations complement technical
+                                                                                  indicators by capturing investor psychology relevant to
+   A promising development in the field of AI is the                              market trends.
+use of Transformer-based architectures, which excel at                         · Extensive experiments validate the proposed model's
+capturing long-range dependencies in sequential data. These                       superiority over traditional and DL baselines, achiev-
+architectures, initially developed for Natural Language                           ing state-of-the-art predictive accuracy and demon-
+Processing (NLP) tasks, have shown great potential in                             strating real-world profitability in simulated trading,
+various domains, including financial market prediction. The                       thus highlighting the model's viability for algorithmic
+incorporation of NLP techniques, such as sentiment analysis,                      investment strategies in highly volatile digital asset
+into cryptocurrency price forecasting models offers the ability                   markets.
+to capture market sentiment from social media platforms                        The remainder of this paper is organized as follows.
+and news outlets, further enhancing prediction accuracy [25],               Section II presents the proposed methodology, detailing the
+[26], [27], [28].                                                           dual-stream attention-based model and the fusion of hard
+                                                                            and soft information. Section III describes the experimental
+   A clear distinction exists between data fusion and informa-              setup, including datasets, evaluation metrics, and results.
+tion fusion. While data fusion typically involves the integra-              Section IV analyzes the findings, highlights the architectural
+tion of raw or low-level features from different sources [29],              contributions of HSIF in contrast to related multimodal and
+information fusion refers to the combination of processed,                  DL models. Finally, Section V discusses the findings and
+semantically rich representations [30]. The proposed Hard                   concludes with directions for future research.
+and Soft Information Fusion (HSIF) framework adopts an
+information fusion strategy by merging high-level features                  II. PROPOSED HSIF MODEL
+from both market indicators and sentiment embeddings                        Cryptocurrency markets are influenced by both hard data
+through bidirectional cross-attention. This enables the model               or quantitative signals and soft data or qualitative factors
+to learn deeper dependencies across modalities, which is                    (e.g., investor sentiment from news and social media).
+essential for robust prediction in sentiment-driven markets.                To address this, a novel NLP-driven dual-stream architecture,
+                                                                            named the HSIF model, is proposed. The model employs
+   Cryptocurrency markets are characterized by extreme                      Transformer-based encoders to process structured technical
+volatility, influenced by both quantitative market data and                 indicators and unstructured text-based sentiment in parallel,
+qualitative factors such as news. However, current fore-                    with bidirectional cross-attention for effective multimodal
+casting models primarily rely on technical indicators or                    fusion.
+simplistic combinations of sentiment analysis and technical
+indicators, often failing to capture the intricate interactions                This section details the model design, preprocessing
+between these factors. While DL models, such as Long                        pipeline, and integration of natural language information
+Short-Term Memory (LSTM)-based and Transformer-based                        to enhance the forecasting of the cryptocurrency price
+architectures, have shown promise, they tend to either                      movements. The overall architecture is shown in Figure 1,
+overlook sentiment or treat it in a simplistic, one-dimensional             and Table 1 defines the notations used throughout.
+manner. To address these challenges, we propose a novel
+Transformer-based framework, HSIF, which fuses hard                         A. PROBLEM DEFINITION
+(quantitative) and soft (qualitative) data through a mutual                 The task is formulated as a binary classification problem:
+attention mechanism. By leveraging NLP with a Bidirectional                 predicting the directional movement of the closing price on
+Encoder Representations from Transformers (BERT)-based                      the next trading day. Let Ct denote the closing price on day t,
+model for sentiment analysis and integrating it with technical              then:
+indicators, our model not only enhances forecasting accuracy
+but also improves robustness and interpretability. Extensive                           yt+1 = 1 if Ct+1 > Ct (upward) (1)
+experiments demonstrate that HSIF significantly outper-                                            0 otherwise (downward),
+forms existing models in both classification accuracy and
+                                                                                                                                                                          156601
+VOLUME 13, 2025
+                                                                  S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+TABLE 1. Summary of notations used throughout the manuscript.
+
+where the label yt+1 indicates the movement of the cryptocur-     FIGURE 1. The proposed hard and soft information fusion framework for
+rency price, where a value of ``1'' shows a positive movement     cryptocurrency price movement prediction.
+(upward), and a value of ``0'' indicates a negative movement
+(downward) [10], [15].                                            financial sentiment data, including analyst reports and
+
+B. PREPROCESSING                                                  earnings calls, allowing for a higher semantic fidelity
+1) TEXTUAL DATA PREPROCESSING (SOFT INFORMATION)
+Incorporating sentiment from social media is pivotal in           in financial domains.
+modeling the psychological behaviors that dominate cryp-
+tocurrency markets. To this end, this study leverages             4) Temporal Aggregation of Sentiment Vectors: Sen-
+soft information extracted from the X platform (formerly
+Twitter) [31], where domain-specific user accounts contin-        timent is aggregated at the daily level by computing
+uously disseminate cryptocurrency-related content. Unlike
+general user-generated noise, only curated, high-frequency        the arithmetic mean of the sentiment probabilities
+accounts were selected to ensure semantic reliability and
+contextual alignment with price movement patterns.                across all tweets posted on the same trading day.
+
+   The raw textual stream is subjected to a rigorous NLP          This results in a time-aligned sentiment vector st =
+pipeline designed to maximize signal quality and prepare the        pos neu neg
+data for DL-based sentiment fusion:                                                      R1×3, which encapsulates the
+                                                                  [st , st , st ]
+   1) Noise Removal and Standardization: All tweets
+       undergo initial de-noising where user mentions are         prevailing market sentiment for that day. Importantly,
+       replaced by the token @user, and hyperlinks are
+       masked as http. This prevents sentiment misclassifi-       this aggregation mechanism acts as a natural denoising
+       cation caused by entities or irrelevant links and ensures
+       token uniformity.                                          filter: any isolated or manipulative content, such as fake
+
+   2) Domain-Specific Tokenization: Each tweet is low-            news or outlier sentiment, is diluted in the presence of
+       ercased and tokenized using the FinBERT tokenizer,
+       a BERT-based tokenizer pretrained specifically on          a large volume of reliable tweets from curated sources.
+       financial language corpora.
+                                                                  As a result, the overall daily sentiment signal becomes
+   3) Transformer-Based Sentiment Encoding: The tok-
+       enized tweets are passed through the FinBERT               inherently robust against misinformation, reducing the
+       model [32], which outputs a probability distribution
+       over three sentiment classes: positive, neutral, and       need for explicit fake news detection mechanisms.
+       negative. FinBERT, unlike general-purpose BERT or
+       even RoBERTa and CryptoBERT, is fine-tuned on                                     VOLUME 13, 2025
+
+156602
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+5) Sequential Sentiment Matrix Formation: For each                          where x¯ and y¯ represent the mean values. Features with an
+    prediction step, a rolling time window of length T days                 absolute correlation coefficient exceeding 0.95 are deemed
+    is applied to construct the soft information matrix:                    redundant. This filtering process reduces the dimensionality
+                                                                            from 52 to 36 features while retaining representative signal
+                 St = [st-T +1, . . . , st ]  RT ×3,  (2)                   diversity.
+
+       This matrix is passed into the soft modality stream                  b: INTERPRETABLE FEATURE SELECTION
+       of the Transformer encoder to preserve sentiment                     To further refine the feature space and prioritize variables
+       chronology and capture temporal mood shifts.                         with the highest predictive contribution, SHapley Additive
+                                                                            exPlanations (SHAP) values are computed. SHAP provides a
+   Preliminary experiments using other transformer-based                    model-agnostic, interpretable quantification of each feature's
+sentiment classifiers, such as RoBERTa [33] and Cryp-                       marginal impact on prediction outcomes [36]. The top
+toBERT [34], confirmed that FinBERT provides consis-                        30 features, selected based on average absolute SHAP value
+tently superior performance in both predictive accuracy                     ranking, are retained for modeling. Figure 2 visualizes the
+and financial return. Its domain-tuned architecture proves                  ranked importance of the final feature set.
+highly effective in capturing nuanced financial sentiment,
+particularly in volatile environments like cryptocurrency
+markets.
+
+   The sentiment matrix St becomes a key driver in the
+fusion process, enabling the model to incorporate qualitative
+insights alongside technical indicators for more informed and
+psychologically aware price forecasting.
+
+2) TECHNICAL INDICATOR PROCESSING AND FEATURE                               FIGURE 2. Feature importance scores derived from SHAP analysis,
+SELECTION (HARD INFORMATION)                                                highlighting the top 30 most informative hard information.
+
+In modern financial time series modeling, quantitative or                      Table 2 summarizes the selected indicators, their descrip-
+``hard'' data, including historical prices and engineered tech-             tions, and key parameters (e.g., window lengths or smoothing
+nical indicators, forms the structural backbone of predictive               factors). These features capture a multidimensional view of
+models. To comprehensively represent the behavior of the                    market behavior, including trend strength, volatility shifts,
+cryptocurrency market, this study extracts a diverse set of                 price momentum, and investor pressure, all of which are
+52 technical features from historical trading data of the cryp-             critical for price direction forecasting.
+tocurrency. These include momentum oscillators, volatility
+bands, volume-based metrics, and trend indicators, which                    c: TEMPORAL CONSTRUCTION OF HARD FEATURE
+collectively offer a robust snapshot of market dynamics.                    MATRICES
+                                                                            Once filtered and selected, these 30 hard features are
+   The historical data are sourced from Yahoo Finance [35],                 structured into temporal sequences using a rolling window
+a widely trusted accessible platform. For each trading day t,               approach. For each trading day t, the 30-dimensional feature
+raw market attributes such as opening price Ot , closing price              vector is defined as:
+Ct , highest price Ht , lowest price Lt , and traded volume
+Volumet are retrieved. These form the basis for computing a
+comprehensive array of technical indicators. A complete list
+of the technical indicators and their mathematical definitions
+is provided in the supplementary material.
+
+a: FEATURE REDUNDANCY REDUCTION VIA CORRELATION
+FILTERING
+
+Although a wide range of indicators enriches the feature                    ht = [BOPt , . . . , Volumet ]  R1×30,                           (4)
+space, they also introduce high inter-feature correlation,
+which can degrade model performance through redundancy                      and the sequential input over a fixed lookback horizon of T
+and multicollinearity. To address this, a Pearson correlation               days is constructed as:
+analysis is conducted across all 52 initial features. The
+correlation coefficient rxy between features x and y is                     Ht = [ht-T +1, . . . , ht ]  RT ×30,                             (5)
+computed as:
+                                                                            where T is the temporal context window, empirically set
+                      n                                                     to 60 in this study. These matrices feed directly into
+                                                                            the hard-stream Transformer encoder, enabling temporal
+                         (xi - x¯)(yi - y¯)                                 attention learning across historical market patterns.
+
+                 rxy = i=1                   ,        (3)                      By combining advanced correlation pruning and
+                                                                            SHAP-driven interpretability, the hard data pipeline delivers
+                 n          n
+
+                    (xi - x¯)2 (yi - y¯)2
+
+                 i=1        i=1
+
+VOLUME 13, 2025                                                                                                     156603
+                                                                     S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+TABLE 2. Overview of the top 30 selected technical indicators (hard  3) DUAL-STREAM TRANSFORMER ENCODERS
+features) used for Bitcoin trend forecasting.                        The encoded matrices are separately passed through three
+                                                                     stacked Transformer encoder layers per modality:
+a compact, information-rich feature space that enhances
+learning efficiency while preserving semantic clarity.                     Ht(l)TransformerEncoder(l)(Ht(l-1)), l = 1, 2, 3, (8)
+                                                                       St(l) = TransformerEncoder(l)(St(l-1)), l = 1, 2, 3, (9)
+C. PROPOSED TRANSFORMER-BASED MULTIMODAL
+TREND PREDICTION MODEL                                               yielding final latent representations H~ t and S~ t .
+This work introduces a novel dual-stream Transformer-
+based architecture that leverages bidirectional cross-attention      4) BIDIRECTIONAL CROSS-ATTENTION FUSION
+for multimodal temporal fusion. The model is designed to             To capture inter-modal dynamics, two cross-attention layers
+effectively learn long-range dependencies within and across          are introduced:
+quantitative (hard) and qualitative (soft) modalities, enabling
+enhanced trend prediction in cryptocurrency markets.                 CHS = MultiHeadAttention(H~ t , S~ t ),       (10)
+
+1) MULTIMODAL INPUT STRUCTURE                                        CSH = MultiHeadAttention(S~ t , H~ t ),       (11)
+Given a time window of size T = 60, the model
+simultaneously ingests:                                              where each stream attends to the other to identify relevant
+                                                                     interdependencies.
+   · Ht  RT ×30: a matrix of 30 engineered financial
+     indicators across T days, capturing historical price            5) MULTIMODAL FEATURE AGGREGATION AND FUSION
+     behavior, momentum, volume dynamics, and volatility             The outputs of the cross-attention modules are condensed via
+     patterns.                                                       global average pooling:
+
+   · St  RT ×3: a matrix of sentiment vectors derived from           zH = GAP(CHS),                                (12)
+     FinBERT, encoding average daily scores for positive,
+     neutral, and negative polarity extracted from financial         zS = GAP(CSH),                                (13)
+     social media discourse.
+                                                                     and subsequently fused:
+   Each modality is independently normalized using min-max
+scaling to mitigate scale disparities. The dataset is chronolog-     zt = [zH  zS ],                               (14)
+ically partitioned into training (70%), validation (15%), and
+test (15%) sets, ensuring no temporal leakage.                       where  denotes the concatenation operator.
+
+2) TEMPORAL ENCODING                                                 6) PREDICTION LAYER
+To preserve sequential context, both inputs undergo posi-
+tional encoding:                                                     The fused vector zt is passed through a dense layer with ReLU
+                                                                     activation and dropout regularization:
+                        Ht(0) = PosEnc(Ht ), (6)
+                         St(0) = PosEnc(St ). (7)                    kt = Dropout(ReLU(Dense(zt ))),               (15)
+
+                                                                     followed by a sigmoid-activated output unit:
+
+                                                                     y^t+1 =  (Dense(kt )),                        (16)
+
+                                                                     which yields the probability of an upward price movement on
+                                                                     day t + 1.
+
+                                                                     7) TRAINING STRATEGY
+                                                                     The model is trained using the binary cross-entropy loss:
+
+                                                                        L = - yt+1 log y^t+1 + (1 - yt+1) log(1 - y^t+1) , (17)
+
+                                                                     with class weighting to address label imbalance. Dropout and
+                                                                     early stopping are used to prevent overfitting.
+
+                                                                     8) DESIGN RATIONALE
+
+                                                                     This architecture empowers the model to learn hierarchical
+                                                                     representations within each modality while dynamically
+                                                                     capturing interdependencies across financial signals and
+                                                                     sentiment narratives. The use of bidirectional attention
+                                                                     between modalities represents a key innovation, enabling
+                                                                     context-aware fusion critical for volatile and sentiment-
+                                                                     sensitive domains like cryptocurrency forecasting.
+
+156604                                                                                                             VOLUME 13, 2025
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+FIGURE 3. Illustration of the proposed dual-stream Transformer architecture with bidirectional cross-attention fusion for multimodal cryptocurrency
+trend prediction.
+
+TABLE 3. Temporal and statistical distribution of Bitcoin dataset.
+
+III. EXPERIMENTS AND RESULTS                                                   The distribution of Bitcoin-related news and corresponding
+To rigorously assess the empirical efficacy of the pro-                     market labels across the training, validation, and testing
+posed cross-attentive dual-stream Transformer framework,                    splits is systematically detailed in Table 3, providing a
+a multifaceted experimental protocol is employed. This                      comprehensive overview of the temporal span and class
+encompasses not only standard classification metrics but                    balance underpinning the experimental evaluation.
+also comprehensive financial backtesting to gauge real-world
+investment viability. Comparative baselines include both                       While the present study focuses on Bitcoin, this decision
+state-of-the-art LSTM-based architectures and transformer-                  was based on its dominant market capitalization, deep
+driven multimodal fusion variants.                                          liquidity, and the uniquely high availability of both structured
+                                                                            market indicators and reliable, temporally aligned sentiment
+A. DATASET CONSTRUCTION AND PREPROCESSING                                   signals. Other major cryptocurrencies exhibited significantly
+Bitcoin, as the most capitalized and actively traded cryp-                  lower volumes of high-quality sentiment data during the
+tocurrency, is selected as the target asset for evaluation.                 same period, limiting their suitability for robust multimodal
+The experimental dataset is composed of both quantitative                   modeling. Nonetheless, the HSIF framework is inherently
+financial data (hard data) and qualitative sentiment data (soft             modular and asset-agnostic. The hard information stream
+data), enabling a multimodal learning process.                              can be readily adapted to any asset with sufficient historical
+                                                                            trading data, and the soft sentiment stream can be recon-
+a: QUANTITATIVE FEATURES (HARD INFORMATION)                                 structed using token-specific or platform-wide social and
+Historical Bitcoin trading data was retrieved from Yahoo                    news discourse. Crucially, the bidirectional cross-attention
+Finance, spanning from 6 April 2015 to 31 December 2022.                    mechanism is not asset-dependent and can dynamically learn
+This raw data was preprocessed into 52 technical indicators                 inter-modal dependencies across varying market contexts.
+encompassing momentum oscillators, volatility measures,
+volume-based metrics, and trend-following features. Redun-                  B. EXPERIMENTAL PROTOCOL
+dancy was mitigated through Pearson correlation analysis                    The Transformer-based architecture was implemented using
+(r > 0.95), reducing the dimensionality to 36. Subsequently,                a DL framework. A sequence length of T = 60 was chosen
+SHAP-based interpretability was leveraged to retain the                     to capture mid-term market memory. Data normalization
+top 30 features with the highest explanatory power for price                was performed via min-max scaling to ensure feature
+movement classification.                                                    homogeneity. The dataset was split chronologically into
+                                                                            training (70%), validation (15%), and testing (15%) sets to
+b: TEXTUAL FEATURES (SOFT INFORMATION)                                      preserve temporal integrity.
+A high-fidelity soft dataset was curated from the X platform
+by monitoring 12 cryptocurrency-focused accounts. Post                         Hyperparameters were exhaustively tuned via grid search.
+quality-control filtering, 8 accounts remained, contributing                The final model employs three Transformer encoder layers,
+over 104, 000 tweets. FinBERT, a domain-optimized BERT                      each with four multi-head attention mechanisms and
+variant, was used to extract sentiment vectors (positive,                   64-dimensional key vectors per head. Dropout regularization
+neutral, negative) at the tweet level. These vectors were then              and early stopping were utilized to curb overfitting. Table 4
+aggregated on a daily basis to yield structured soft inputs                 details the selected configurations.
+St  RT ×3, aligned with hard features.
+                                                                               Class imbalance was addressed using weighted cross-
+VOLUME 13, 2025                                                             entropy loss. Additionally, decision thresholds were opti-
+                                                                            mized on the validation set via F1-maximization, scanning
+                                                                            thresholds from 0.30 to 0.70.
+
+                                                                                                                                                                          156605
+                                                                     S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+TABLE 4. Hyperparameter configuration for Transformer architecture.  reliable under severe class imbalance and is defined as:
+
+                                                                     MCC =   TP · TN -FP · FN                                  ,
+
+                                                                             (TP + FP)(TP + FN )(TN + FP)(TN + FN )
+
+                                                                                               (20)
+
+                                                                     MCC values range from -1 (complete disagreement)
+                                                                     to +1 (perfect prediction), with 0 indicating random
+                                                                     guessing.
+
+   To determine the optimal architectural depth for the              2) FINANCIAL PERFORMANCE METRICS
+transformer encoder, a series of ablation studies were               To quantify the economic viability of the proposed frame-
+conducted by varying the number of encoder layers from               work, the model is evaluated in a simulated trading envi-
+one to four. As presented in Table 5, a configuration with           ronment. This simulation employs model predictions to
+three stacked transformer layers achieved the highest overall        drive buy/sell decisions under realistic market conditions,
+classification performance.                                          including transaction costs and capital constraints. Three
+                                                                     widely accepted financial indicators are adopted:
+C. EVALUATION FRAMEWORK
+To ensure a rigorous and multidimensional assessment                    · Final Capital (TMoney): Represents the accumu-
+of the proposed Transformer-based prediction framework,                   lated capital at the end of the trading simulation,
+both classification and financial performance metrics are                 beginning with an initial capital of 100,000 USD.
+employed. This dual-perspective evaluation strategy enables               Trading decisions are governed by Algorithm 1, with a
+not only a prediction assessment of the model, but also its               fixed transaction commission of 0.1% applied to each
+practical efficacy in real-world trading scenarios.                       operation.
+
+1) CLASSIFICATION METRICS                                               · Return Percentage (R): Measures the total percentage
+Three primary classification metrics are utilized to measure              gain or loss relative to the initial investment, offering a
+the model's performance in binary trend prediction: Accu-                 direct assessment of profitability:
+racy, F1 score, and Matthews Correlation Coefficient (MCC).
+These metrics collectively capture the balance between true                   Return (%) = TMoneyfinal - TMoneyinitial × 100,
+predictions and class distribution, providing a holistic view                                            TMoneyinitial
+of classification quality.                                                                                                               (21)
+
+   · Accuracy: Denotes the proportion of correctly classified             where TMoneyinitial and TMoneyfinal denote the starting
+     instances among the total number of samples. It is                   and final capital, respectively.
+     computed as:                                                       · Sharpe Ratio (SR): A critical risk-adjusted perfor-
+                                                                          mance measure, the Sharpe ratio quantifies the excess
+        Accuracy =  TP + TN              , (18)                           return per unit of volatility. It is calculated as:
+
+                    TP + TN + FP + FN                                                           Sharpe Ratio = µR , (22)
+                                                                                                                    R
+  where TP, TN , FP, and FN represent true positives,
+  true negatives, false positives, and false negatives,                   where µR denotes the mean of daily returns and
+  respectively.                                                           R represents the standard deviation of daily returns.
+· F1 Score: A harmonic mean of precision and recall,                      A higher Sharpe ratio implies a more favorable trade-off
+  particularly valuable in imbalanced classification prob-                between return and risk.
+  lems. It quantifies the model's ability to correctly predict
+  the minority class without being biased by the dominant               This dual-metric evaluation framework, spanning both
+  one:                                                               classification integrity and financial profitability, provides a
+                                                                     robust lens through which the real-world readiness of the
+                                                                     proposed model can be rigorously examined.
+
+        F1 Score =  2 × TP            ,  (19)                        D. COMPARATIVE RESULTS AND INSIGHTS
+
+                    2 × TP + FP + FN                                 Table 6 presents a comprehensive evaluation of seven model
+                                                                     configurations, encompassing hard only, simple concatena-
+· MCC: A robust and informative metric that evaluates                tion, and advanced fusion strategies across three sentiment
+  classification performance across all four components              encoders: CryptoBERT, RoBERTa, and FinBERT. Notably,
+  of the confusion matrix. Unlike accuracy, MCC remains              the fusion-based architecture leveraging FinBERT achieves
+                                                                     the highest predictive performance, delivering an accuracy of
+                                                                     97.48%, F1 score of 97.27%, MCC of 94.98%, return per-
+                                                                     centage of 26.64%, and Sharpe ratio of 0.3344, significantly
+
+156606                                                                                         VOLUME 13, 2025
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+TABLE 5. Comparison of model performance with different numbers of Transformer layers (mean ± standard deviation).
+
+Algorithm 1 Cryptocurrency Trading Algorithm With                 E. BENCHMARKING AGAINST SEQUENTIAL MODELS
+                                                                  To underscore the superiority of attention mechanisms over
+Commission, Used to Simulate Trading Decisions Based on           recurrence-based models, comparative experiments are con-
+                                                                  ducted with Bidirectional LSTM (BiLSTM), Stacked LSTM,
+Predicted Market Trends                                           and CNN-LSTM architectures. Although BiLSTM attains
+     Input: Prediction Results, Opening and Closing Prices        strong classification scores, all recurrent architectures fail to
+     Output: Final Capital (TMoney)                               produce positive financial returns, suggesting overfitting to
+                                                                  short-term temporal signals and an inability to adapt to market
+1: TMoney  100, 000                                               non-stationarity.
+
+2: label_previous  -1                                                To underscore the superiority of attention mechanisms
+3: Commission_Rate  0.001                                         over recurrence-based models, comparative experiments are
+4: while Cryptocurrency Price Prediction Data Available do        conducted with BiLSTM, Stacked LSTM, and CNN-LSTM
+                                                                  architectures. As shown in Table 7, although BiLSTM
+5: label  Prediction Result                                       achieves strong classification performance, all recurrent
+                                                                  architectures fail to produce positive financial returns,
+6: if label = label_previous then                                 suggesting overfitting to short-term temporal signals and an
+                                                                  inability to adapt to market non-stationarity.
+7:   if label = 1 then
+                                                                     The findings conclusively demonstrate that integrating
+8:               Commission  Commission_Rate×TMoney               domain-specific sentiment embeddings with quantitative
+                                                                  indicators through a bidirectional cross-attention Trans-
+9:               Buy Cryptocurrency                               former architecture yields substantial gains in both predictive
+                                                                  accuracy and financial return. The model not only excels at
+10:              TMoney  TMoney + Closing_Price ×                 capturing nonlinear dependencies across modalities, but also
+                                                                  exhibits resilience in volatile market regimes, an essential
+     Number_of _Stocks - Commission                               trait for deployment in algorithmic trading pipelines.
+
+11:  else                                                         F. CASE STUDY: MODEL BEHAVIOR DURING SIGNIFICANT
+                                                                  MARKET EVENT
+12:              Sell Cryptocurrency                              To further evaluate the interpretability of the HSIF model and
+                                                                  understand how it incorporates sentiment signals, we examine
+13:              Commission  Commission_Rate×TMoney               its prediction during a major market event driven by public
+                                                                  sentiment. On 15 October 2021, the US Securities and
+14:              TMoney  TMoney + Closing_Price ×                 Exchange Commission (SEC) approved the first Bitcoin
+                                                                  futures Exchange-Traded Fund (ETF), triggering a surge
+     Number_of _Stocks - Commission                               in positive market sentiment. FinBERT-derived sentiment
+                                                                  scores for that day were strongly optimistic (positive = 0.95,
+15:  end if                                                       neutral = 0.045, negative = 0.004). HSIF correctly predicted
+                                                                  an upward movement (y^t+1 = 1), which aligned with the
+16: end if                                                        actual market outcome. This finding highlights the ability of
+                                                                  the model to incorporate qualitative investor sentiment in a
+17: label_previous  label                                         meaningful and interpretable way.
+18: end while
+19: return TMoney                                                 IV. DISCUSSION
+                                                                  The empirical findings of this study underscore the transfor-
+outperforming its simple concatenation counterpart and all        mative potential of multimodal DL and domain-specific NLP
+other baselines.                                                  in enhancing cryptocurrency trend prediction. The proposed
+
+   The empirical findings highlight the importance of modal-
+ity interaction: while simple concatenation preserves feature
+representation from each stream, it lacks the contextual
+synergy enabled by cross-attention. By contrast, the fusion
+strategy explicitly models interdependencies between quanti-
+tative indicators and sentiment signals, thus capturing a richer
+joint feature space.
+
+   These results demonstrate that domain-specific sentiment
+analysis, when properly fused with structured quantitative
+data through a Transformer-based dual-stream cross-
+attention mechanism, offers a significant edge in cryptocur-
+rency trend prediction. In particular, the superiority of the
+FinBERT-based fusion model underscores the importance
+of financial language modeling in capturing market-relevant
+sentiment nuances.
+
+VOLUME 13, 2025                                                                                                     156607
+                                                                                                                    S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+TABLE 6. Performance comparison across fusion architectures and sentiment encoders (mean ± standard deviation).
+
+TABLE 7. Performance comparison between the proposed HSIF model and LSTM-based architectures, with all results reported as mean ± standard
+deviation.
+
+HSIF framework, underpinned by a Transformer-based                 semantic precision in identifying market-relevant cues,
+architecture and bidirectional cross-attention, significantly      particularly in the context of emotionally charged and
+outperforms existing benchmarks across both classification         speculation-driven markets like cryptocurrency. This aligns
+and financial metrics.                                             with emerging trends in finance-specific language modeling,
+                                                                   where pretrained transformers tailored to economic contexts
+A. ARCHITECTURAL INSIGHTS AND CORE                                 show clear empirical benefits.
+CONTRIBUTIONS
+A primary innovation of this work lies in its ability to              Table 8 presents a comprehensive comparison between
+dynamically integrate heterogeneous data sources, structured       HSIF and a range of recent Bitcoin forecasting models,
+numerical indicators and unstructured textual sentiment,           including other multimodal and DL-based approaches.
+using cross-modal attention mechanisms. While traditional          Although several previous works have integrated sentiment
+models are limited to unimodal inputs or simple concatena-         data or applied DL techniques, HSIF introduces a uniquely
+tion, the proposed architecture captures intricate interdepen-     cohesive and technically novel design.
+dencies between market signals and investor sentiment in a
+temporally consistent fashion. This fusion not only improves          To highlight the architectural innovations of HSIF,
+prediction fidelity but also introduces interpretability into the  we compare it with two recent multimodal models,
+decision-making pipeline.                                          CBITS [39] and PreBit [38]. Unlike CBITS, which uses static
+                                                                   sentiment scores and TabNet without temporal modeling or
+   The architecture reflects a deeper conceptual shift from        joint optimization, HSIF incorporates dynamic bidirectional
+conventional data fusion toward information fusion. Data           cross-attention and trains both data streams end-to-end.
+fusion techniques, which integrate disparate sources of raw        Similarly, PreBit relies on the simple concatenation of
+or semi-structured data, enhance the reliability, accuracy,        CNN-based market characteristics and FinBERT tweet
+and consistency of predictions by mitigating issues such           embeddings but lacks temporal fusion and focuses only on
+as data uncertainty, incompleteness, and inconsistency [29].       extreme price movement prediction. In contrast, HSIF offers
+In contrast, information fusion operates at a higher abstrac-      a more expressive and adaptable framework by modeling
+tion level, combining semantically processed, structured, and      interactions between sentiment and market indicators over
+context-aware features from multiple modalities to support         time, enhancing both forecast accuracy and practical
+deeper insight extraction and informed decision-making [30].       applicability.
+The proposed HSIF model embodies this distinction by not
+only merging raw features but also interpreting them through          HSIF incorporates SHAP-based feature filtering, sup-
+domain-specific sentiment encoding and attention-driven            ports joint end-to-end training, and is evaluated using
+integration, ultimately achieving more context-sensitive and       investment-grade financial metrics such as return and Sharpe
+actionable outputs.                                                ratio. These features make HSIF a robust and practical tool
+                                                                   for real-world trading strategies.
+   The superior performance of the FinBERT-driven
+sentiment stream further illustrates the critical role of             This expanded comparison demonstrates that HSIF is
+domain-adapted language models in financial forecasting.           not only a high-performing model but also an architec-
+Unlike general-purpose models, FinBERT exhibits enhanced           turally distinct and finance-aware approach, combining inter-
+                                                                   pretability, modularity, and scalability for multimodal trend
+                                                                   prediction.
+
+156608                                                             VOLUME 13, 2025
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+TABLE 8. A comparative analysis of the proposed method versus existing approaches.
+
+   Compared to state-of-the-art baselines (see Table 8), the      By restricting the dataset to high-credibility sources and
+HSIF model achieves a substantial leap in predictive accuracy     aggregating sentiment signals at the daily level, the need
+(97.48%) and profitability (26.64% return with a Sharpe           for separate mechanisms for the detection of fake news was
+ratio of 0.3344), suggesting that cross-attentive fusion of       effectively mitigated. All tweets were publicly available,
+soft and hard data yields both algorithmic alpha, excess          and no personal or private data was collected. Nevertheless,
+return driven by the predictive edge of model, and improved       we acknowledge that sentiment-based models may still
+market adaptivity. This finding challenges the dominance of       be vulnerable to manipulation. Therefore, any real-world
+traditional LSTM-based sequential models, which, despite          implementation of HSIF should include safeguards such as
+high classification scores, often fail to generalize in volatile  human oversight, anomaly detection, and risk controls to
+and nonstationary trading environments.                           ensure responsible use.
+
+   Furthermore, the dual-stream design promotes temporal          C. ADVANCING FRAMEWORK: FUTURE DIRECTIONS
+abstraction and modality disentanglement, allowing the            Despite the promising results achieved by the proposed
+model to isolate and recombine relevant temporal signals          model, there remain several challenges in the field of
+across data types. This contrasts with conventional attention     cryptocurrency price prediction that warrant exploration in
+or CNN-LSTM hybrids, which are prone to overfitting               future research. While this study focuses on Bitcoin due
+short-term trends without capturing broader macrobehavior         to its dominant market capitalization and the availability
+or sentiment drifts.                                              of high-quality sentiment and market data, the proposed
+                                                                  HSIF framework is inherently modular and asset-agnostic.
+   From a practical standpoint, our results advocate the          Its design supports extension to other cryptocurrencies or
+integration of social signals into automated trading frame-       financial instruments, as well as integration of new data
+works. In particular, the robustness of the architecture across   sources and deployment-aware modeling enhancements. Key
+diverse time frames and news cycles suggests high viability       directions for future work include:
+for deployment in live trading environments, potentially
+improving risk-adjusted returns and market timing decisions.         · Fake News Detection: In this work, sentiment signals
+                                                                       are derived exclusively from verified and reputable
+B. ETHICAL AND PRACTICAL CONSIDERATIONS                                sources to ensure data reliability. To extend the frame-
+This study uses sentiment data exclusively from a curated              work to broader social media and news platforms, where
+set of reliable, domain-specific X accounts focused on                 misinformation is more prevalent, future efforts will
+Bitcoin, rather than from random users. This reduces                   incorporate robust fake news detection mechanisms.
+exposure to misinformation, noise, and manipulative content.
+                                                                                                                                                                156609
+VOLUME 13, 2025
+                                                                                 S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+     These may include real-time fact-checking systems,                           [6] X. Dong and M. Yu, ``Time-varying effects of macro shocks on cross-
+     credibility scoring, and anomaly detection algorithms to                           border capital flows in China's bond market,'' Int. Rev. Econ. Finance,
+     filter unreliable content, which is critical for safe and                          vol. 96, Nov. 2024, Art. no. 103720.
+     ethical deployment in automated trading systems.
+   · Prioritization of News: Not all news carries equal                           [7] I. Gurrib and F. Kamalov, ``Predicting Bitcoin price movements using
+     market impact. A future direction involves developing                              sentiment analysis: A machine learning approach,'' Stud. Econ. Finance,
+     relevance-aware attention modules or external ranking                              vol. 39, no. 3, pp. 347-364, Apr. 2022.
+     systems to assign weights to news items based on
+     contextual importance and historical market influence.                       [8] M. Alizadeh, D. S. Zadeh, B. Moshiri, and A. Montazeri, ``Development of
+   · Multi-Cryptocurrency Forecasting: While this study                                 a customer churn model for banking industry based on hard and soft data
+     focuses on Bitcoin due to data quality and market                                  fusion,'' IEEE Access, vol. 11, pp. 29759-29768, 2023.
+     dominance, the HSIF framework is inherently modular
+     and asset-agnostic. Future work will extend it to                            [9] S. Goutte, H.-V. Le, F. Liu, and H.-J. von Mettenheim, ``Deep learning and
+     other major cryptocurrencies, enabling portfolio-level                             technical analysis in cryptocurrency market,'' Finance Res. Lett., vol. 54,
+     forecasting and cross-asset sentiment modeling.                                    Jun. 2023, Art. no. 103809.
+   · Incorporating Realistic Trading Constraints: Future
+     work will also explore integrating realistic trading                        [10] C. Zhong, W. Du, W. Xu, Q. Huang, Y. Zhao, and M. Wang, ``LSTM-
+     constraints, such as slippage, volatility, and transaction                         ReGAT: A network-centric approach for cryptocurrency price trend
+     costs, into the model's trading algorithm. This will help                          prediction,'' Decis. Support Syst., vol. 169, Jun. 2023, Art. no. 113955.
+     to simulate real world conditions more accurately and
+     improve the practical applicability of the model in live                    [11] N. Majidi, M. Shamsi, and F. Marvasti, ``Algorithmic trading using
+     trading environments.                                                              continuous action space deep reinforcement learning,'' Expert Syst. Appl.,
+                                                                                        vol. 235, Jan. 2024, Art. no. 121245.
+   In summary, this study not only advances the state-
+of-the-art in crypto-financial forecasting but also lays a                       [12] M. Qureshi, H. Iftikhar, P. C. Rodrigues, M. Z. Rehman, and S. A. A. Salar,
+foundation for broader applications of multimodal learning                              ``Statistical modeling to improve time series forecasting using machine
+and sentiment-aware modeling in high-volatility domains.                                learning, time series, and hybrid models: A case study of Bitcoin price
+                                                                                        forecasting,'' Mathematics, vol. 12, no. 23, p. 3666, Nov. 2024.
+V. CONCLUSION
+This study introduces HSIF, a novel Transformer-based                            [13] K. A. Coulter, ``The impact of news media on Bitcoin prices: Modelling
+dual-stream model that fuses market data and sentiment                                  data driven discourses in the crypto-economy with natural language
+through bidirectional cross attention for cryptocurrency                                processing,'' Roy. Soc. Open Sci., vol. 9, no. 4, Apr. 2022, Art. no. 220276.
+trend prediction. Our results show state-of-the-art accuracy
+(97.48%) and financial returns (26.64%), demonstrating the                       [14] S. M. Dashtaki, M. Alizadeh, and B. Moshiri, ``Stock market prediction
+ability of HSIF to integrate structured and unstructured data                           using hard and soft data fusion,'' in Proc. 13th Int. Conf. Inf. Knowl.
+in volatile markets. Using FinBERT for sentiment analysis                               Technol. (IKT), Dec. 2022, pp. 1-7.
+and SHAP for feature selection, HSIF enhances the fusion
+of market sentiment with technical analysis. This research                       [15] Y. Ma, R. Mao, Q. Lin, P. Wu, and E. Cambria, ``Multi-source aggregated
+paves the way for future work in cross-asset forecasting                                classification for stock price movement prediction,'' Inf. Fusion, vol. 91,
+and live trading, supporting the development of autonomous                              pp. 515-528, Mar. 2023.
+sentiment-aware trading systems.
+                                                                                 [16] L. Jing, X. Fan, D. Feng, C. Lu, and S. Jiang, ``A patent text-based product
+REFERENCES                                                                              conceptual design decision-making approach considering the fusion of
+                                                                                        incomplete evaluation semantic and scheme beliefs,'' Appl. Soft Comput.,
+ [1] Z. Zhou, Z. Song, H. Xiao, and T. Ren, ``Multi-source data driven                  vol. 157, May 2024, Art. no. 111492.
+       cryptocurrency price movement prediction and portfolio optimization,''
+       Expert Syst. Appl., vol. 219, Jun. 2023, Art. no. 119600.                 [17] F. Feizian and B. Amiri, ``Cryptocurrency price prediction model based
+                                                                                        on sentiment analysis and social influence,'' IEEE Access, vol. 11,
+ [2] Y. Xiang, Y. Lei, D. Bao, T. Li, Q. Yang, W. Liu, W. Ren,                          pp. 142177-142195, 2023.
+       and K.-K.-R. Choo, ``BABD: A Bitcoin address behavior dataset
+       for pattern analysis,'' IEEE Trans. Inf. Forensics Security, vol. 19,     [18] S. Otabek and J. Choi, ``From prediction to profit: A comprehensive review
+       pp. 2171-2185, 2024.                                                             of cryptocurrency trading strategies and price forecasting techniques,''
+                                                                                        IEEE Access, vol. 12, pp. 87039-87064, 2024.
+ [3] S. Squarepants, ``Bitcoin: A peer-to-peer electronic cash system,'' 2008.
+       [Online]. Available: https://bitcoin.org/en/bitcoin-paper                 [19] M. N. Ashtiani and B. Raahemi, ``News-based intelligent prediction of
+                                                                                        financial markets using text mining and machine learning: A systematic
+ [4] A. Wahrstätter, A. Taudes, and D. Svetinovic, ``Reducing privacy of                literature review,'' Expert Syst. Appl., vol. 217, May 2023, Art. no. 119509.
+       CoinJoin transactions: Quantitative Bitcoin network analysis,'' IEEE
+       Trans. Dependable Secure Comput., vol. 21, no. 5, pp. 4543-4558,          [20] A. Ibrahim, R. Kashef, and L. Corrigan, ``Predicting market movement
+       Sep. 2024.                                                                       direction for Bitcoin: A comparison of time series modeling methods,''
+                                                                                        Comput. Electr. Eng., vol. 89, Jan. 2021, Art. no. 106905.
+ [5] A. F. M. S. Shah, M. A. Karabulut, A. F. M. S. Akhter, N. Mustari,
+       A.-S.-K. Pathan, K. M. Rabie, and T. Shongwe, ``On the vital aspects      [21] N. P. Patel, R. Parekh, N. Thakkar, R. Gupta, S. Tanwar, G. Sharma,
+       and characteristics of cryptocurrency--A survey,'' IEEE Access, vol. 11,         I. E. Davidson, and R. Sharma, ``Fusion in cryptocurrency price prediction:
+       pp. 9451-9468, 2023.                                                             A decade survey on recent advancements, architecture, and potential future
+                                                                                        directions,'' IEEE Access, vol. 10, pp. 34511-34538, 2022.
+156610
+                                                                                 [22] M. Hosseini Chagahi, N. Delfan, S. Mohammadi Dashtaki, B. Moshiri,
+                                                                                        and M. Jalil Piran, ``Explainable AI for fraud detection: An attention-based
+                                                                                        ensemble of CNNs, GNNs, and a confidence-driven gating mechanism,''
+                                                                                        2024, arXiv:2410.09069.
+
+                                                                                 [23] S. K. Sahu, A. Mokhade, and N. D. Bokde, ``An overview of machine
+                                                                                        learning, deep learning, and reinforcement learning-based techniques in
+                                                                                        quantitative finance: Recent progress and challenges,'' Appl. Sci., vol. 13,
+                                                                                        no. 3, p. 1956, Feb. 2023.
+
+                                                                                 [24] G. Bansal, V. Chamola, G. Kaddoum, M. J. Piran, and M. Alrashoud, ``Next
+                                                                                        generation stock exchange: Recurrent neural learning model for distributed
+                                                                                        ledger transactions,'' Comput. Netw., vol. 193, Jul. 2021, Art. no. 107998.
+
+                                                                                 [25] S. Islam, H. Elmekki, A. Elsebai, J. Bentahar, N. Drawel, G. Rjoub, and
+                                                                                        W. Pedrycz, ``A comprehensive survey on applications of transformers
+                                                                                        for deep learning tasks,'' Expert Syst. Appl., vol. 241, May 2024,
+                                                                                        Art. no. 122666.
+
+                                                                                 [26] S. Anbaee Farimani, M. V. Jahan, and A. Milani Fard, ``An adaptive
+                                                                                        multimodal learning model for financial market price prediction,'' IEEE
+                                                                                        Access, vol. 12, pp. 121846-121863, 2024.
+
+                                                                                 [27] A. Iranfar, M. Soleymannejad, B. Moshiri, and H. D. Taghirad, ``Natural
+                                                                                        language processing and soft data for motor skill assessment: A case study
+                                                                                        in surgical training simulations,'' Comput. Methods Programs Biomed.,
+                                                                                        vol. 264, Jun. 2025, Art. no. 108686.
+
+                                                                                                                                                                                  VOLUME 13, 2025
+S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+[28] M. A. Izadi and E. Hajizadeh, ``Time series prediction for cryptocurrency                                     MEHDI HOSSEINI CHAGAHI received the B.Sc.
+       markets with transformer and parallel convolutional neural networks,''                                      degree in electrical and computer engineering
+       Appl. Soft Comput., vol. 177, Jun. 2025, Art. no. 113229.                                                   (Hons.) and the M.Sc. degree in electrical and
+                                                                                                                   computer engineering from the University of
+[29] T. Meng, X. Jing, Z. Yan, and W. Pedrycz, ``A survey on machine learning                                      Tehran, Tehran, Iran, one of the top-ranked
+       for data fusion,'' Inf. Fusion, vol. 57, pp. 115-129, May 2020.                                             universities in the country. He was ranked 56th
+                                                                                                                   in the nationwide master's entrance examination.
+[30] M. A. Becerra, C. Tobón, A. E. Castro-Ospina, and D. H. Peluffo-Ordóñez,                                      His research contributions include publications in
+       ``Information quality assessment for data fusion systems,'' Data, vol. 6,                                   IEEE Transactions journals, along with service
+       no. 6, p. 60, Jun. 2021.                                                                                    as a reviewer for leading international journals.
+                                                                                    He has been a Research Assistant with Sejong University, Seoul, South
+[31] Twitter. Twitter Platform for Social Media Content. Accessed:                  Korea, where he worked on projects in cardiovascular disease prediction,
+       Mar. 1, 2023. [Online]. Available: https://twitter.com/                      multi-modal learning for medical diagnosis, and AI-based brain hemorrhage
+                                                                                    detection. He also served as a Teaching Assistant with the University of
+[32] D. Araci, ``FinBERT: Financial sentiment analysis with pre-trained             Tehran, where he guided students in machine learning and deep learning.
+       language models,'' 2019, arXiv:1908.10063.                                   In addition, he leads multiple research teams in the field of artificial
+                                                                                    intelligence. For his M.Sc. thesis, he developed a fuzzy-based vision
+[33] Y. Liu, M. Ott, N. Goyal, J. Du, M. Joshi, D. Chen, O. Levy, M. Lewis,         transformer for brain hemorrhage diagnosis from CT scans. The model
+       L. Zettlemoyer, and V. Stoyanov, ``RoBERTa: A robustly optimized BERT        was successfully deployed in a hospital setting, where it significantly
+       pretraining approach,'' 2019, arXiv:1907.11692.                              improved both diagnostic speed and accuracy. His research interests include
+                                                                                    artificial intelligence in healthcare, trustworthy AI, fuzzy logic, and mobile
+[34] M. Kulakowski and F. Frasincar, ``Sentiment classification of                  computing.
+       cryptocurrency-related social media posts,'' IEEE Intell. Syst., vol. 38,
+       no. 4, pp. 5-9, Jul. 2023.                                                                                  AEIN BAHADORI received the B.Sc. degree in
+                                                                                                                   electrical engineering (control systems) from Isfa-
+[35] Yahoo Finance. Yahoo Finance: Historical Market Data.                                                         han University of Technology, Iran, in 2020, and
+       Accessed: Mar. 1, 2023. [Online]. Available: https://finance.yahoo.com/                                     the M.Sc. degree in control system engineering
+                                                                                                                   (with a specialization in machine learning) from
+[36] R. M. Dashtaki, S. M. Dashtaki, E. Heydari-Bafrooei, and M. J. Piran,                                         the University of Padova, Italy, in 2024. His
+       ``Enhancing the predictive performance of molecularly imprinted polymer-                                    research interests include data science, deep learn-
+       based electrochemical sensors using a stacking regressor ensemble of                                        ing, machine learning, computer vision, robotics,
+       machine learning models,'' ACS Sensors, vol. 10, no. 4, pp. 3123-3133,                                      and control theory.
+       Apr. 2025.
+
+[37] M. Azamjon, O. Sattarov, and J. Cho, ``Forecasting Bitcoin volatility
+       through on-chain and whale-alert tweet analysis using the Q-learning
+       algorithm,'' IEEE Access, vol. 11, pp. 108092-108103, 2023.
+
+[38] Y. Zou and D. Herremans, ``PreBit--A multimodal model with Twitter
+       FinBERT embeddings for extreme price movement prediction of Bitcoin,''
+       Expert Syst. Appl., vol. 233, Dec. 2023, Art. no. 120838.
+
+[39] G. Kim, M. Kim, B. Kim, and H. Lim, ``CBITS: Crypto BERT incorporated
+       trading system,'' IEEE Access, vol. 11, pp. 6912-6921, 2023.
+
+[40] M.-C. Lee, ``Bitcoin trend prediction with attention-based deep learning
+       models and technical indicators,'' Systems, vol. 12, no. 11, p. 498,
+       Nov. 2024.
+
+[41] H. Subramanian, P. Angle, F. Rouxelin, and Z. Zhang, ``A decision support
+       system using signals from social media and news to predict cryptocurrency
+       prices,'' Decis. Support Syst., vol. 178, Mar. 2024, Art. no. 114129.
+
+[42] P. Peng, Y. Chen, W. Lin, and J. Z. Wang, ``Attention-based CNN-LSTM
+       for high-frequency multiple cryptocurrency trend prediction,'' Expert Syst.
+       Appl., vol. 237, Mar. 2024, Art. no. 121520.
+
+[43] L. Shang, ``Sentiment-driven Bitcoin price range forecasting: Enhancing
+       CART decision trees with high-dimensional indicators and Twitter
+       dynamics,'' IEEE Access, vol. 13, pp. 60508-60518, 2025.
+
+                               SAEED MOHAMMADI DASHTAKI received the                                               BEHZAD MOSHIRI (Senior Member, IEEE)
+                               B.Sc. degree in electrical engineering from Isfahan                                 received the M.Sc. and Ph.D. degrees in con-
+                               University of Technology, Isfahan, Iran, in 2019,                                   trol systems engineering from the University of
+                               and the M.Sc. degree in electrical engineering                                      Manchester Institute of Science and Technology
+                               from the University of Tehran, Tehran, Iran,                                        (UMIST), in 1987 and 1991, respectively. He has
+                               in 2023. He has been a Research Assistant                                           been an Adjunct Professor with the Department of
+                               and a Teaching Assistant with the University of                                     Electrical and Computer Engineering, University
+                               Tehran and also a Research Assistant with Sejong                                    of Waterloo, Canada, since 2014. He is currently
+                               University, Seoul, South Korea, where his research                                  a Full Professor of control systems engineering
+                               contributions at both universities have focused                                     with the School of Electrical and Computer
+on machine learning, data/information fusion, neural networks and deep              Engineering, University of Tehran, Iran. He is the author/co-author of more
+learning, multi-modal learning, trustworthy AI, financial engineering, and          than 360 articles, including more than 130 journal articles and more than
+healthcare. He has published several articles in high-impact journals, such         20 book chapters. His research interests include advanced industrial control,
+as ``IEEE TRANSACTIONS journals.'' His research interests include artificial        advanced instrumentation systems, data fusion theory, and its applications
+intelligence, deep learning, data/information fusion, financial engineering,        in areas such as robotics, process control, mechatronics, information
+medical image analysis, robotics, and control theory.                               technology (IT), intelligent transportation systems (ITS), bioinformatics, and
+                                                                                    financial engineering. He has been a member of the International Society
+VOLUME 13, 2025                                                                     of Information Fusion (ISIF), since 2002, and a member of the Waterloo
+                                                                                    AI Institute, since 2019. He has also been serving as the Chairperson
+                                                                                    for the IEEE Control Systems Chapter in the IEEE Iran Section, since
+                                                                                    December 2018.
+
+                                                                                                                                                                                  156611
+                                                                                    S. M. Dashtaki et al.: HSIF: A Transformer-Based Cross-Attention Framework
+
+                               MD. JALIL PIRAN (Senior Member, IEEE)                                               ALLAHYAR MONTAZERI (Member, IEEE)
+                               received the Ph.D. degree in electronics and infor-                                 received the B.S. degree in electrical engineering
+                               mation engineering from Kyung Hee University,                                       from the University of Tehran, Iran, in 2000,
+                               South Korea, in 2016. He was a Postdoctoral                                         and the M.Sc. and Ph.D. degrees in electrical
+                               Fellow with Kyung Hee University, until 2017.                                       engineering from Iran University of Science and
+                               He holds a distinguished academic background                                        Technology, Tehran, in 2002 and 2009, respec-
+                               and is currently an Associate Professor with                                        tively. From 2010 to 2011, he was a Research
+                               the Department of Computer Science and Engi-                                        Fellow with the Fraunhofer Institute, Germany,
+                               neering, Sejong University, Seoul, South Korea.                                     and continued his research with Fraunhofer IDMT
+                               He has made significant contributions to the field                                  and the Control Engineering Group, Ilmenau
+of artificial intelligence and data science through his extensive research          University, from 2011 to 2013. He also held visiting research positions with
+publications in esteemed international journals and conferences. His areas          the Control Engineering Group, ETH Zürich, Switzerland, and the Chemical
+of expertise encompass machine learning, data science, big data, the                Engineering Group, Norwegian University of Science and Technology
+Internet of Things (IoT), and cyber security. In addition to his research           (NTNU), Trondheim, Norway. Since 2013, he has been with the School of
+endeavors, he actively engages with scholarly journals as an Editor, including      Engineering, Lancaster University, U.K., where he is currently an Associate
+IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS, Engineering                Professor. His research has been supported by various U.K. research councils
+Applications of Artificial Intelligence (Elsevier), Physical Communica-             and industrial partners, including the Engineering and Physical Sciences
+tion (Elsevier), and Computer Communications (Elsevier). He represents              Research Council (EPSRC) and the National Nuclear Laboratory. His
+South Korea as an Active Delegate to the Moving Picture Experts Group               research interests include control theory and digital signal processing, with
+(MPEG). His outstanding research contributions have been recognized                 a focus on adaptive signal processing and control, robust control, system
+internationally, as evidenced by the prestigious ``Scientist Medal of the Year      identification (linear and nonlinear), estimation theory, and evolutionary
+2017'' awarded by IAAM in Stockholm, Sweden. Moreover, he received                  computing and optimization. He received the ERCIM Fellowship in 2010 and
+accolades from Iranian Ministry of Science, Technology, and Research,               the Humboldt Research Award in 2011. He is a fellow of the Higher
+as an ``Outstanding Emerging Researcher'' in 2017. His exceptional Ph.D.            Education Academy. His work has applications in active noise and vibration
+dissertation was honored as the ``Dissertation of the Year 2016'' by Iranian        control systems and robotics. He currently serves as the Editor-in-Chief
+Academic Centre for Education, Culture, and Research in the Engineering             for the Journal of Intelligent and Fuzzy Systems, and an Associate Editor
+Group. He also serves as the Secretary for the IEEE Consumer Technology             for Frontiers in Robotics and AI and Science Progress. He is a member
+Society on Machine Learning, Deep Learning, and AI. Furthermore,                    of the Executive Board of U.K. Automatic Control Network and serves on
+he assumes the role of the Track Chair of Machine Learning, Deep Learning,          the IFAC Technical Committees on ``Adaptive and Learning Systems'' and
+and AI in the CE (MDA) Track for the upcoming 2024 IEEE International               ``Modelling, Identification, and Signal Processing.''
+Conference on Consumer Electronics (ICCE). In 2022, he chaired the ``5G
+and Beyond Communications'' Session at the prestigious IEEE International
+Conference on Communications (ICC). His expertise as a reviewer extends
+to leading journals and he actively participates in various conferences.
+
+156612                                                                              VOLUME 13, 2025
+
